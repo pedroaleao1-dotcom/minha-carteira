@@ -143,6 +143,13 @@ const App: React.FC = () => {
         else if (member?.role === 'child') setView('child_dash');
     };
 
+    const handleLogout = () => {
+        setActiveMemberId(null);
+        setSelectedDreamId(null);
+        setReviewingMemberId(null);
+        setView('role');
+    };
+
     const handleSellItem = (redemptionId: string) => {
         if (!activeMember) return;
         const redemption = activeMember.redemptions.find(r => r.id === redemptionId);
@@ -234,13 +241,13 @@ const App: React.FC = () => {
             
             {activeMember && (
                 <>
-                    {view === 'child_dash' && <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={() => setView('role')} />}
+                    {view === 'child_dash' && <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={handleLogout} />}
                     {view === 'parent_dash' && (
                         <ParentDashboard 
                             activeParent={activeMember} 
                             members={members} 
                             onApprove={approveTask} 
-                            onBack={() => setView('role')} 
+                            onLogout={handleLogout} 
                             onAddTask={() => setView('add_task')} 
                             onAddStoreItem={() => setView('add_store_item')} 
                             onPlay={() => setView('child_dash')} 

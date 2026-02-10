@@ -6,13 +6,13 @@ interface Props {
     activeParent: Member;
     members: Member[];
     onApprove: (taskId: string) => void;
-    onBack: () => void;
+    onLogout: () => void;
     onAddTask: () => void;
     onAddStoreItem: () => void;
     onPlay: () => void;
 }
 
-const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onBack, onAddTask, onAddStoreItem, onPlay }) => {
+const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onPlay }) => {
     // Pegamos todas as tarefas pendentes de todos os membros
     const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending'));
 
@@ -28,7 +28,7 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                         <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Conselho de Heróis</p>
                     </div>
                 </div>
-                <button onClick={onBack} className="text-slate-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all">
+                <button onClick={onLogout} className="text-slate-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all">
                     <span className="material-symbols-outlined text-lg">logout</span>
                     <span className="text-[10px] font-black uppercase tracking-tighter">Sair</span>
                 </button>

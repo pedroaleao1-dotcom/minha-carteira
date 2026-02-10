@@ -23,7 +23,22 @@ export const fetchMembers = async (): Promise<Member[]> => {
 export const upsertMember = async (member: Member) => {
     const { error } = await supabase
         .from('members')
-        .upsert(member);
+        .upsert({
+            id: member.id,
+            name: member.name,
+            avatar: member.avatar,
+            role: member.role,
+            badge: member.badge,
+            level: member.level,
+            xp: member.xp,
+            coins: member.coins,
+            dreams: member.dreams,
+            tasks: member.tasks,
+            achievements: member.achievements,
+            redemptions: member.redemptions,
+            history: member.history,
+            notifications: member.notifications
+        });
     
     if (error) console.error('Error upserting member:', error);
 };
