@@ -1,21 +1,38 @@
 
 import React, { useState } from 'react';
-import { Task } from '../types';
+import { Task, Member } from '../types';
 
 interface Props {
+    members: Member[];
     onAdd: (task: Omit<Task, 'id' | 'status'>) => void;
     onBack: () => void;
 }
 
 const ICONS = ['cleaning_services', 'menu_book', 'restaurant', 'category', 'pets', 'eco', 'brush', 'sports_soccer'];
 
-const AddTask: React.FC<Props> = ({ onAdd, onBack }) => {
+const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
     const [title, setTitle] = useState('');
     const [reward, setReward] = useState(20);
     const [icon, setIcon] = useState('cleaning_services');
+    const [assignedTo, setAssignedTo] = useState<string[]>([]);
+
+    const children = members.filter(m => m.role === 'child');
+
+    const toggleMember = (id: string) => {
+        setAssignedTo(prev => 
+            prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
+        );
+    };
+
+    const selectAll = () => {
+        if (assignedTo.length === children.length) setAssignedTo([]);
+        else setAssignedTo(children.map(c => c.id));
+    };
+
+    const isFormValid = title.trim() !== '' && assignedTo.length > 0;
 
     return (
-        <div className="flex-1 flex flex-col p-6 bg-slate-50">
+        <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen">
             <header className="flex items-center justify-between mb-8 pt-4">
                 <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-700">
                     <span className="material-symbols-outlined">close</span>
@@ -24,7 +41,7 @@ const AddTask: React.FC<Props> = ({ onAdd, onBack }) => {
                 <div className="w-12 h-12"></div>
             </header>
 
-            <main className="space-y-6">
+            <main className="space-y-6 overflow-y-auto pb-12">
                 <div className="space-y-2">
                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">O que fazer?</label>
                     <input 
@@ -36,14 +53,48 @@ const AddTask: React.FC<Props> = ({ onAdd, onBack }) => {
                     />
                 </div>
 
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center px-2">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Quem vai fazer?</label>
+                        <button 
+                            onClick={selectAll}
+                            className="text-[10px] font-black text-[#2b8cee] uppercase bg-blue-50 px-3 py-1 rounded-full"
+                        >
+                            {assignedTo.length === children.length ? 'Desmarcar' : 'Todos'}
+                        </button>
+                    </div>
+                    <div className="flex flex-wrap gap-4 px-2">
+                        {children.map(child => {
+                            const isSelected = assignedTo.includes(child.id);
+                            return (
+                                <button
+                                    key={child.id}
+                                    onClick={() => toggleMember(child.id)}
+                                    className="flex flex-col items-center gap-2 group"
+                                >
+                                    <div className={`relative w-14 h-14 rounded-full border-4 transition-all ${isSelected ? 'border-[#2b8cee] scale-110 shadow-md' : 'border-white opacity-40 grayscale'}`}>
+                                        <img src={child.avatar} alt={child.name} className="w-full h-full object-cover rounded-full" />
+                                        {isSelected && (
+                                            <div className="absolute -top-1 -right-1 bg-[#2b8cee] text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                                                <span className="material-symbols-outlined text-[12px] font-black">check</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className={`text-[9px] font-black uppercase ${isSelected ? 'text-[#2b8cee]' : 'text-slate-400'}`}>
+                                        {child.name}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
                 <div className="space-y-2">
                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Valor da Recompensa</label>
                     <div className="flex items-center gap-4 bg-white rounded-2xl p-4 border-2 border-slate-100">
                         <input 
                             type="range" 
-                            min="5" 
-                            max="200" 
-                            step="5"
+                            min="5" max="200" step="5"
                             value={reward}
                             onChange={(e) => setReward(Number(e.target.value))}
                             className="flex-1 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#2b8cee]"
@@ -71,12 +122,11 @@ const AddTask: React.FC<Props> = ({ onAdd, onBack }) => {
                 </div>
 
                 <button 
-                    disabled={!title}
-                    // Fix: Added assignedTo: [] to match Omit<Task, 'id' | 'status'>
-                    onClick={() => onAdd({ title, reward, xp: reward * 2, icon, assignedTo: [] })}
-                    className="w-full bg-[#2b8cee] text-white py-5 rounded-3xl font-black text-xl shadow-[0_6px_0_0_#1a6ac4] active-press disabled:opacity-50 mt-8"
+                    disabled={!isFormValid}
+                    onClick={() => onAdd({ title, reward, xp: reward * 2, icon, assignedTo })}
+                    className="w-full bg-[#2b8cee] text-white py-5 rounded-3xl font-black text-xl shadow-[0_6px_0_0_#1a6ac4] active-press disabled:opacity-50 mt-4"
                 >
-                    CRIAR MISSÃO 🚀
+                    LANÇAR MISSÃO 🚀
                 </button>
             </main>
         </div>

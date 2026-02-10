@@ -1,15 +1,15 @@
 
 import React from 'react';
-// Fix: Change Child to Member as Child is not exported from types
 import { Member } from '../types';
 
 interface Props {
     child: Member;
     onNavigate: (view: any) => void;
     onOpenDream: (id: string) => void;
+    onLogout: () => void;
 }
 
-const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream }) => {
+const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLogout }) => {
     const activeDreams = child.dreams.filter(d => d.status === 'active');
     const proposalDreams = child.dreams.filter(d => d.status === 'proposal');
     const displayDreams = [...activeDreams, ...proposalDreams].slice(0, 3);
@@ -18,6 +18,17 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream }) => 
     return (
         <div className="flex-1 flex flex-col p-6 pb-24">
             <header className="flex flex-col items-center mb-8 pt-4">
+                <div className="w-full flex justify-between items-center mb-4">
+                    <button 
+                        onClick={onLogout} 
+                        className="text-slate-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all"
+                    >
+                        <span className="material-symbols-outlined text-lg">logout</span>
+                        <span className="text-[10px] font-black uppercase tracking-tighter">Sair</span>
+                    </button>
+                    <div className="w-10 h-10"></div> {/* Spacer */}
+                </div>
+
                 <div className="relative mb-4 cursor-pointer group" onClick={() => onNavigate('profile')}>
                     <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white group-active:scale-95 transition-transform">
                         <img src={child.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -28,7 +39,6 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream }) => 
                 </div>
                 <h1 className="text-2xl font-black text-slate-800">Olá, {child.name}! 👋</h1>
                 
-                {/* Saldo de Moedas Clicável */}
                 <button 
                     onClick={() => onNavigate('wallet')}
                     className="mt-6 bg-white rounded-full px-6 py-2 shadow-lg flex items-center gap-2 border border-slate-100 active:scale-95 transition-all hover:bg-amber-50"
@@ -40,7 +50,7 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream }) => 
                 </button>
             </header>
 
-            {/* Seção de Sonhos (Máximo 3) */}
+            {/* Seção de Sonhos */}
             <section className="mb-8">
                 <div className="flex justify-between items-end mb-4 px-2">
                     <h2 className="text-xl font-black text-slate-800">Cofre de Sonhos 🚀</h2>
@@ -95,7 +105,7 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream }) => 
                 </div>
             </section>
 
-            {/* Seção de Missões Rápidas (Máximo 3) */}
+            {/* Missões Rápidas */}
             <section className="mb-8">
                 <div className="flex justify-between items-end mb-4 px-2">
                     <h2 className="text-xl font-black text-slate-800">Missões de Hoje ⚡</h2>

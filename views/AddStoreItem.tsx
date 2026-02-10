@@ -33,6 +33,11 @@ const AddStoreItem: React.FC<Props> = ({ members, onAdd, onBack }) => {
         );
     };
 
+    const selectAll = () => {
+        if (assignedTo.length === children.length) setAssignedTo([]);
+        else setAssignedTo(children.map(c => c.id));
+    };
+
     const isFormValid = title.trim() !== '' && assignedTo.length > 0;
 
     return (
@@ -46,7 +51,6 @@ const AddStoreItem: React.FC<Props> = ({ members, onAdd, onBack }) => {
             </header>
 
             <main className="space-y-8 overflow-y-auto pb-12">
-                {/* Nome e Preço */}
                 <div className="space-y-6 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Nome do Prêmio</label>
@@ -76,9 +80,16 @@ const AddStoreItem: React.FC<Props> = ({ members, onAdd, onBack }) => {
                     </div>
                 </div>
 
-                {/* Quem pode comprar */}
                 <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Quem pode comprar? 🦸‍♂️</label>
+                    <div className="flex justify-between items-center px-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quem pode comprar?</label>
+                        <button 
+                            onClick={selectAll}
+                            className="text-[10px] font-black text-purple-600 uppercase bg-purple-50 px-3 py-1 rounded-full"
+                        >
+                            {assignedTo.length === children.length ? 'Desmarcar' : 'Todos'}
+                        </button>
+                    </div>
                     <div className="flex flex-wrap gap-4 px-2">
                         {children.map(child => {
                             const isSelected = assignedTo.includes(child.id);
@@ -103,12 +114,8 @@ const AddStoreItem: React.FC<Props> = ({ members, onAdd, onBack }) => {
                             );
                         })}
                     </div>
-                    {assignedTo.length === 0 && (
-                        <p className="text-[9px] text-red-400 font-bold italic ml-2">Selecione pelo menos um herói!</p>
-                    )}
                 </div>
 
-                {/* Estilo e Ícone */}
                 <div className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Cor do Card</label>

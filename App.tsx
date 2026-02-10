@@ -66,11 +66,14 @@ const App: React.FC = () => {
     const [storeItems, setStoreItems] = useState<StoreItem[]>([]);
     const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
     const [selectedDreamId, setSelectedDreamId] = useState<string | null>(null);
+    const [reviewingMemberId, setReviewingMemberId] = useState<string | null>(null);
 
     const activeMember = members.find(m => m.id === activeMemberId);
-    const selectedDream = activeMember?.dreams?.find(d => d.id === selectedDreamId);
+    
+    const selectedDream = members
+        .flatMap(m => m.dreams)
+        .find(d => d.id === selectedDreamId);
 
-    // Inicialização e Real-time Subscription
     useEffect(() => {
         const init = async () => {
             try {
@@ -99,7 +102,6 @@ const App: React.FC = () => {
 
         init();
 
-        // Inscrever para mudanças em tempo real nas tabelas
         const membersSubscription = supabase
             .channel('members_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, (payload) => {
@@ -126,15 +128,11 @@ const App: React.FC = () => {
         };
     }, []);
 
-    const updateActiveMember = async (updater: (m: Member) => Member) => {
-        if (!activeMemberId) return;
-        const currentMember = members.find(m => m.id === activeMemberId);
+    const updateMemberById = async (id: string, updater: (m: Member) => Member) => {
+        const currentMember = members.find(m => m.id === id);
         if (!currentMember) return;
-
         const updated = updater(currentMember);
-        // Atualização Otimista local
-        setMembers(prev => prev.map(m => m.id === activeMemberId ? updated : m));
-        // Persistência Remota
+        setMembers(prev => prev.map(m => m.id === id ? updated : m));
         await upsertMember(updated);
     };
 
@@ -145,52 +143,50 @@ const App: React.FC = () => {
         else if (member?.role === 'child') setView('child_dash');
     };
 
-    const handleAddMember = async (newMemberData: any) => {
-        const newMember: Member = {
-            ...newMemberData,
-            id: Math.random().toString(36).substr(2, 9),
-            level: 1, xp: 0, coins: 0, dreams: [], tasks: [], achievements: [], redemptions: [], history: [],
-            notifications: { tasks: true, achievements: true }
-        };
-        await upsertMember(newMember);
-        setView('role');
-    };
-
-    const handleAddDream = (dreamData: any) => {
-        const newDream: Dream = {
-            ...dreamData,
-            id: Math.random().toString(36).substr(2, 9),
-            currentAmount: 0,
-            status: 'active'
-        };
-        updateActiveMember(m => ({
-            ...m,
-            dreams: [...m.dreams, newDream]
-        }));
-        setView('dream_gallery');
-    };
-
-    const handleAddCoinsToDream = (amount: number) => {
-        if (!selectedDreamId || !activeMember || activeMember.coins < amount) return;
+    const handleSellItem = (redemptionId: string) => {
+        if (!activeMember) return;
+        const redemption = activeMember.redemptions.find(r => r.id === redemptionId);
+        if (!redemption) return;
+        
+        const storeItem = storeItems.find(si => si.id === redemption.itemId);
+        const refundAmount = storeItem ? Math.floor(storeItem.price * 0.7) : 10;
         const now = Date.now();
-        updateActiveMember(m => ({
+
+        updateMemberById(activeMember.id, m => ({
             ...m,
-            coins: m.coins - amount,
-            dreams: m.dreams.map(d => d.id === selectedDreamId ? { ...d, currentAmount: d.currentAmount + amount } : d),
-            history: [{ id: `tx-dream-${now}`, type: 'investment', title: `Poupou para: ${selectedDream?.title}`, amount: -amount, icon: selectedDream?.icon || 'star', timestamp: now }, ...m.history]
+            coins: m.coins + refundAmount,
+            redemptions: m.redemptions.filter(r => r.id !== redemptionId),
+            history: [{ 
+                id: `tx-sell-${now}`, 
+                type: 'sale', 
+                title: `Vendeu: ${redemption.title}`, 
+                amount: refundAmount, 
+                icon: redemption.icon, 
+                timestamp: now 
+            }, ...m.history]
         }));
     };
 
-    const handleBuyItem = (item: StoreItem) => {
-        if (activeMember && activeMember.coins >= item.price) {
-            const now = Date.now();
-            updateActiveMember(m => ({
-                ...m,
-                coins: m.coins - item.price,
-                redemptions: [...m.redemptions, { id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'delivered', timestamp: now }],
-                history: [{ id: `tx-${now}`, type: 'purchase', title: `Comprou: ${item.title}`, amount: -item.price, icon: item.icon, timestamp: now }, ...m.history]
-            }));
-        }
+    const handleReviewDreamConfirm = (dreamId: string, realAmount: number, tasks: Omit<Task, 'id' | 'status'>[]) => {
+        if (!reviewingMemberId) return;
+        
+        const now = Date.now();
+        const newTasks: Task[] = tasks.map(t => ({
+            ...t,
+            id: Math.random().toString(36).substr(2, 9),
+            status: 'todo',
+            assignedTo: [reviewingMemberId]
+        }));
+
+        updateMemberById(reviewingMemberId, m => ({
+            ...m,
+            dreams: m.dreams.map(d => d.id === dreamId ? { ...d, targetAmount: realAmount, status: 'active' as const } : d),
+            tasks: [...m.tasks, ...newTasks]
+        }));
+        
+        setView('parent_dash');
+        setReviewingMemberId(null);
+        setSelectedDreamId(null);
     };
 
     const approveTask = async (taskId: string) => {
@@ -198,10 +194,10 @@ const App: React.FC = () => {
         const memberToUpdate = members.find(m => m.tasks.some(t => t.id === taskId && t.status === 'pending'));
         if (!memberToUpdate) return;
 
-        const taskIndex = memberToUpdate.tasks.findIndex(t => t.id === taskId);
-        const task = memberToUpdate.tasks[taskIndex];
+        const task = memberToUpdate.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
         const updatedTask = { ...task, status: 'completed' as const };
-        
         const updated: Member = {
             ...memberToUpdate,
             tasks: memberToUpdate.tasks.map(t => t.id === taskId ? updatedTask : t),
@@ -226,16 +222,7 @@ const App: React.FC = () => {
                 <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-6 animate-bounce">
                     <span className="material-symbols-outlined text-4xl text-[#2b8cee] animate-spin">cloud_sync</span>
                 </div>
-                <p className="font-black text-slate-400 uppercase tracking-[0.3em] text-xs">Conectando ao Supabase...</p>
-            </div>
-        );
-    }
-
-    if (members.length === 0 && !isLoading) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-slate-50 p-8 text-center">
-                <h1 className="text-xl font-black text-slate-800 mb-4">Bem-vindo ao DreamQuest!</h1>
-                <button onClick={() => setView('add_member')} className="bg-[#2b8cee] text-white px-8 py-4 rounded-full font-black shadow-lg">CRIAR PRIMEIRO HERÓI</button>
+                <p className="font-black text-slate-400 uppercase tracking-[0.3em] text-xs">Sincronizando...</p>
             </div>
         );
     }
@@ -243,22 +230,53 @@ const App: React.FC = () => {
     return (
         <div className="max-w-md mx-auto min-h-screen relative overflow-x-hidden flex flex-col">
             {view === 'role' && <RoleSelection members={members} onSelect={handleMemberSelect} onAddNew={() => setView('add_member')} />}
-            {view === 'add_member' && <AddMember onSave={handleAddMember} onBack={() => setView('role')} />}
+            {view === 'add_member' && <AddMember onSave={async (m) => { await upsertMember({...m, id: Math.random().toString(36).substr(2, 9), level: 1, xp: 0, coins: 0, dreams: [], tasks: [], achievements: [], redemptions: [], history: [], notifications: {tasks: true, achievements: true}}); setView('role'); }} onBack={() => setView('role')} />}
             
             {activeMember && (
                 <>
-                    {view === 'child_dash' && <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} />}
-                    {view === 'parent_dash' && <ParentDashboard activeParent={activeMember} members={members} onApprove={approveTask} onBack={() => setView('role')} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onPlay={() => setView('child_dash')} />}
+                    {view === 'child_dash' && <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={() => setView('role')} />}
+                    {view === 'parent_dash' && (
+                        <ParentDashboard 
+                            activeParent={activeMember} 
+                            members={members} 
+                            onApprove={approveTask} 
+                            onBack={() => setView('role')} 
+                            onAddTask={() => setView('add_task')} 
+                            onAddStoreItem={() => setView('add_store_item')} 
+                            onPlay={() => setView('child_dash')} 
+                        />
+                    )}
                     {view === 'dream_gallery' && <DreamGallery dreams={activeMember.dreams} onSelect={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onAdd={() => setView('add_dream')} onBack={() => setView('child_dash')} />}
-                    {view === 'add_dream' && <AddDream onAdd={handleAddDream} onBack={() => setView('dream_gallery')} />}
-                    {view === 'dream_details' && selectedDream && <DreamDetails dream={selectedDream} coins={activeMember.coins} onAddCoins={handleAddCoinsToDream} onBack={() => setView('dream_gallery')} />}
-                    {view === 'add_store_item' && <AddStoreItem members={members} onAdd={async (item) => { const newItem = { ...item, id: Math.random().toString(36).substr(2, 9) }; await upsertStoreItem(newItem); setView('parent_dash'); }} onBack={() => setView('parent_dash')} />}
-                    {view === 'profile' && <Profile child={activeMember} storeItems={storeItems} onNavigate={setView} onBack={() => setView(activeMember.role === 'parent' ? 'parent_dash' : 'child_dash')} onUpdateAvatar={(img) => updateActiveMember(m => ({...m, avatar: img}))} onUpdateNotifications={(notifs) => updateActiveMember(m => ({...m, notifications: notifs}))} onBuyItem={handleBuyItem} onSellItem={(id) => { /* handleSellItem logic here */ }} />}
+                    {view === 'add_dream' && <AddDream onAdd={(d) => { updateMemberById(activeMember.id, m => ({...m, dreams: [...m.dreams, {...d, id: Math.random().toString(36).substr(2, 9), currentAmount: 0, status: 'active'}]})); setView('dream_gallery'); }} onBack={() => setView('dream_gallery')} />}
+                    {view === 'dream_details' && selectedDream && <DreamDetails dream={selectedDream} coins={activeMember.coins} onAddCoins={(amt) => updateMemberById(activeMember.id, m => ({...m, coins: m.coins - amt, dreams: m.dreams.map(d => d.id === selectedDreamId ? {...d, currentAmount: d.currentAmount + amt} : d)}))} onBack={() => setView(activeMember.role === 'child' ? 'dream_gallery' : 'parent_dash')} />}
+                    {view === 'review_dream' && selectedDream && <ReviewDream dream={selectedDream} onConfirm={handleReviewDreamConfirm} onBack={() => setView('parent_dash')} />}
+                    {view === 'add_store_item' && <AddStoreItem members={members} onAdd={async (item) => { await upsertStoreItem({...item, id: Math.random().toString(36).substr(2, 9)}); setView('parent_dash'); }} onBack={() => setView('parent_dash')} />}
+                    {view === 'profile' && <Profile child={activeMember} storeItems={storeItems} onNavigate={setView} onBack={() => setView(activeMember.role === 'parent' ? 'parent_dash' : 'child_dash')} onUpdateAvatar={(img) => updateMemberById(activeMember.id, m => ({...m, avatar: img}))} onUpdateNotifications={(n) => updateMemberById(activeMember.id, m => ({...m, notifications: n}))} onBuyItem={(item) => activeMember.coins >= item.price && updateMemberById(activeMember.id, m => ({...m, coins: m.coins - item.price, redemptions: [...m.redemptions, {id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'delivered', timestamp: Date.now()}]}))} onSellItem={handleSellItem} />}
                     {view === 'wallet' && <Wallet child={activeMember} onBack={() => setView('child_dash')} />}
-                    {view === 'tasks' && <TaskList tasks={activeMember.tasks} onComplete={(id) => updateActiveMember(m => ({...m, tasks: m.tasks.map(t => t.id === id ? {...t, status: 'pending'} : t)}))} onBack={() => setView('child_dash')} />}
-                    {view === 'store' && <Store coins={activeMember.coins} storeItems={storeItems.filter(si => si.assignedTo.includes(activeMember.id))} redemptions={activeMember.redemptions} onBuy={handleBuyItem} onBack={() => setView('child_dash')} />}
+                    {view === 'tasks' && <TaskList tasks={activeMember.tasks} onComplete={(id) => updateMemberById(activeMember.id, m => ({...m, tasks: m.tasks.map(t => t.id === id ? {...t, status: 'pending'} : t)}))} onBack={() => setView('child_dash')} />}
+                    {view === 'store' && <Store coins={activeMember.coins} storeItems={storeItems.filter(si => si.assignedTo.includes(activeMember.id))} redemptions={activeMember.redemptions} onBuy={(item) => updateMemberById(activeMember.id, m => ({...m, coins: m.coins - item.price, redemptions: [...m.redemptions, {id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'pending', timestamp: Date.now()}]}))} onBack={() => setView('child_dash')} />}
                     {view === 'achievements' && <Achievements achievements={activeMember.achievements} onBack={() => setView('child_dash')} />}
-                    {view === 'request_mission' && <RequestMission onPropose={(proposal) => { updateActiveMember(m => ({ ...m, tasks: [...m.tasks, { ...proposal, id: Math.random().toString(36).substr(2, 9), status: 'pending', reward: 20, xp: 40, assignedTo: [m.id] }] })); setView('child_dash'); }} onBack={() => setView('child_dash')} />}
+                    {view === 'request_mission' && <RequestMission onPropose={(p) => { updateMemberById(activeMember.id, m => ({...m, tasks: [...m.tasks, {...p, id: Math.random().toString(36).substr(2, 9), status: 'pending', reward: 20, xp: 40, assignedTo: [m.id]}]})); setView('child_dash'); }} onBack={() => setView('child_dash')} />}
+                    {view === 'add_task' && (
+                        <AddTask 
+                            members={members} 
+                            onAdd={async (t) => { 
+                                // Para cada membro atribuído, adicionamos a missão individualmente
+                                await Promise.all(t.assignedTo.map(id => 
+                                    updateMemberById(id, m => ({
+                                        ...m, 
+                                        tasks: [...m.tasks, {
+                                            ...t, 
+                                            id: Math.random().toString(36).substr(2, 9), 
+                                            status: 'todo'
+                                        }]
+                                    }))
+                                ));
+                                setView('parent_dash'); 
+                            }} 
+                            onBack={() => setView('parent_dash')} 
+                        />
+                    )}
                 </>
             )}
         </div>
