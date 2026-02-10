@@ -1,15 +1,17 @@
 
-import Dexie, { type Table } from 'dexie';
+// Fix: Use named import for Dexie to ensure that inheritance and base class methods like 'version' are correctly recognized by the TypeScript compiler.
+import { Dexie } from 'dexie';
+import type { Table } from 'dexie';
 import { Member, StoreItem } from '../types';
 
-// Fix: Use default import for Dexie to ensure 'version' and other base methods are correctly recognized during inheritance
+// Inherit from Dexie class using the named import to provide proper typing for 'version' and other methods.
 export class DreamQuestDB extends Dexie {
   members!: Table<Member>;
   storeItems!: Table<StoreItem>;
 
   constructor() {
     super('DreamQuestDB');
-    // version() is a method inherited from the Dexie base class used to define the schema
+    // Defining database version and schema using the inherited version() method.
     this.version(1).stores({
       members: 'id, name, role',
       storeItems: 'id, title'

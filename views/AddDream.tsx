@@ -66,13 +66,19 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
             return;
         }
         setIsGenerating(true);
-        const imageUrl = await generateDreamImage(title);
-        if (imageUrl) {
-            setPhoto(imageUrl);
-        } else {
-            alert("Ops! A magia falhou um pouco. Tente novamente!");
+        try {
+            const imageUrl = await generateDreamImage(title);
+            if (imageUrl) {
+                setPhoto(imageUrl);
+            } else {
+                alert("Ops! A magia falhou um pouco. Tente novamente!");
+            }
+        } catch (error) {
+            console.error("AI Generation failed:", error);
+            alert("Não conseguimos gerar a imagem agora. Tente novamente em alguns instantes!");
+        } finally {
+            setIsGenerating(false);
         }
-        setIsGenerating(false);
     };
 
     const handleAdd = () => {
@@ -113,21 +119,30 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                             />
 
                             {isGenerating && (
-                                <div className="absolute inset-0 z-20 bg-blue-500/90 flex flex-col items-center justify-center text-white p-6 text-center backdrop-blur-sm">
+                                <div className="absolute inset-0 z-20 bg-blue-500/90 flex flex-col items-center justify-center text-white p-6 text-center backdrop-blur-sm animate-pop-in">
                                     <span className="material-symbols-outlined text-5xl animate-spin mb-4">auto_awesome</span>
-                                    <p className="font-black uppercase tracking-widest text-[10px] animate-pulse">Criando Magia...</p>
+                                    <p className="font-black uppercase tracking-widest text-[10px] animate-pulse">Invocando Magia...</p>
                                 </div>
                             )}
 
                             {photo ? (
                                 <div className="relative w-full h-full animate-pop-in">
                                     <img src={photo} className="w-full h-full object-cover" alt="Sonho" />
-                                    <button 
-                                        onClick={() => setPhoto(null)}
-                                        className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">delete</span>
-                                    </button>
+                                    <div className="absolute top-2 right-2 flex gap-2">
+                                        <button 
+                                            onClick={handleGenerateAI}
+                                            className="bg-white/90 backdrop-blur-sm text-[#2b8cee] w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all border border-blue-100"
+                                            title="Regerar com IA"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setPhoto(null)}
+                                            className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
                             ) : isCameraOpen ? (
                                 <div className="w-full h-full relative">
@@ -172,13 +187,24 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">O que você quer?</label>
-                        <input 
-                            type="text" 
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Ex: Uma prancha de surf!"
-                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-5 font-black text-slate-800 outline-none focus:border-[#2b8cee] transition-colors shadow-inner"
-                        />
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Ex: Uma prancha de surf!"
+                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-5 pr-16 font-black text-slate-800 outline-none focus:border-[#2b8cee] transition-colors shadow-inner"
+                            />
+                            {title.trim() && !photo && !isGenerating && (
+                                <button 
+                                    onClick={handleGenerateAI}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-br from-[#2b8cee] to-purple-600 text-white rounded-xl shadow-lg flex items-center justify-center active:scale-90 transition-all animate-pop-in"
+                                    title="Gerar imagem com IA"
+                                >
+                                    <span className="material-symbols-outlined">auto_awesome</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-2">

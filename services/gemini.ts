@@ -1,10 +1,9 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const getMasterTip = async (context: string) => {
     try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: "gemini-3-flash-preview",
             contents: `Você é um mentor mágico de crianças chamado Mestre dos Sonhos. 
@@ -20,12 +19,17 @@ export const getMasterTip = async (context: string) => {
 
 export const generateDreamImage = async (prompt: string) => {
     try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     {
-                        text: `Crie uma imagem vibrante, mágica e estilo animação 3D para crianças de um sonho: ${prompt}. Estilo alegre, cores vivas, alta qualidade.`,
+                        text: `ESTILO: Flat Vector Illustration, Sticker style, Die-cut, High contrast, bold lines, 2D minimalist graphic. 
+                        ASSUNTO: ${prompt}. 
+                        CORES: Vibrantes e sólidas. 
+                        FUNDO: Branco sólido ou isolado. 
+                        Qualidade máxima, sem sombras complexas ou degradês realistas.`,
                     },
                 ],
             },

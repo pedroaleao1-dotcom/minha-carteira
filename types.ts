@@ -3,11 +3,22 @@ export type UserRole = 'child' | 'parent';
 
 export interface Transaction {
     id: string;
-    type: 'purchase' | 'sale' | 'reward' | 'investment';
+    type: 'purchase' | 'sale' | 'reward' | 'investment' | 'bonus';
     title: string;
-    amount: number; // Positivo para ganhos, negativo para gastos
+    amount: number;
     icon: string;
     timestamp: number;
+}
+
+export interface LevelConfig {
+    level_number: number;
+    xp_required: number;
+    shield_icon: string;
+    title: string;
+}
+
+export interface GlobalSettings {
+    allow_coin_creation: boolean;
 }
 
 export interface Member {
@@ -15,7 +26,7 @@ export interface Member {
     name: string;
     avatar: string;
     role: UserRole;
-    badge: 'star' | 'heart' | 'settings' | 'none';
+    badge: string;
     level: number;
     xp: number;
     coins: number;
@@ -50,7 +61,7 @@ export interface Task {
     icon: string;
     proposalImage?: string;
     linkedDreamId?: string;
-    assignedTo: string[]; // IDs dos membros que podem fazer
+    assignedTo: string[];
 }
 
 export interface StoreItem {
@@ -59,7 +70,7 @@ export interface StoreItem {
     price: number;
     icon: string;
     color: string;
-    assignedTo: string[]; // IDs de quem pode comprar
+    assignedTo: string[];
 }
 
 export interface Redemption {

@@ -16,8 +16,6 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
     const [icon, setIcon] = useState('cleaning_services');
     const [assignedTo, setAssignedTo] = useState<string[]>([]);
 
-    const children = members.filter(m => m.role === 'child');
-
     const toggleMember = (id: string) => {
         setAssignedTo(prev => 
             prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
@@ -25,8 +23,8 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
     };
 
     const selectAll = () => {
-        if (assignedTo.length === children.length) setAssignedTo([]);
-        else setAssignedTo(children.map(c => c.id));
+        if (assignedTo.length === members.length) setAssignedTo([]);
+        else setAssignedTo(members.map(c => c.id));
     };
 
     const isFormValid = title.trim() !== '' && assignedTo.length > 0;
@@ -60,28 +58,33 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
                             onClick={selectAll}
                             className="text-[10px] font-black text-[#2b8cee] uppercase bg-blue-50 px-3 py-1 rounded-full"
                         >
-                            {assignedTo.length === children.length ? 'Desmarcar' : 'Todos'}
+                            {assignedTo.length === members.length ? 'Desmarcar' : 'Todos'}
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-4 px-2">
-                        {children.map(child => {
-                            const isSelected = assignedTo.includes(child.id);
+                        {members.map(member => {
+                            const isSelected = assignedTo.includes(member.id);
                             return (
                                 <button
-                                    key={child.id}
-                                    onClick={() => toggleMember(child.id)}
+                                    key={member.id}
+                                    onClick={() => toggleMember(member.id)}
                                     className="flex flex-col items-center gap-2 group"
                                 >
                                     <div className={`relative w-14 h-14 rounded-full border-4 transition-all ${isSelected ? 'border-[#2b8cee] scale-110 shadow-md' : 'border-white opacity-40 grayscale'}`}>
-                                        <img src={child.avatar} alt={child.name} className="w-full h-full object-cover rounded-full" />
+                                        <img src={member.avatar} alt={member.name} className="w-full h-full object-cover rounded-full" />
                                         {isSelected && (
                                             <div className="absolute -top-1 -right-1 bg-[#2b8cee] text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
                                                 <span className="material-symbols-outlined text-[12px] font-black">check</span>
                                             </div>
                                         )}
+                                        {member.role === 'parent' && (
+                                            <div className="absolute -bottom-1 -left-1 bg-slate-800 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                                <span className="material-symbols-outlined text-[10px] fill-1">shield</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <span className={`text-[9px] font-black uppercase ${isSelected ? 'text-[#2b8cee]' : 'text-slate-400'}`}>
-                                        {child.name}
+                                        {member.name}
                                     </span>
                                 </button>
                             );
