@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Dream } from '../types';
+import { generateDreamImage } from '../services/gemini';
 
 interface Props {
     onAdd: (dream: Omit<Dream, 'id' | 'currentAmount'>) => void;
@@ -15,9 +16,11 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
     const [icon, setIcon] = useState('rocket_launch');
     const [photo, setPhoto] = useState<string | null>(null);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const startCamera = async () => {
         try {
@@ -46,13 +49,40 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
         setIsCameraOpen(false);
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhoto(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleGenerateAI = async () => {
+        if (!title.trim()) {
+            alert("Escreva o nome do seu sonho primeiro!");
+            return;
+        }
+        setIsGenerating(true);
+        const imageUrl = await generateDreamImage(title);
+        if (imageUrl) {
+            setPhoto(imageUrl);
+        } else {
+            alert("Ops! A magia falhou um pouco. Tente novamente!");
+        }
+        setIsGenerating(false);
+    };
+
     const handleAdd = () => {
         if (!title) return;
         onAdd({
             title,
             targetAmount,
             icon,
-            imageUrl: photo || `https://picsum.photos/seed/${title}/400/300`
+            imageUrl: photo || `https://picsum.photos/seed/${title}/400/300`,
+            status: 'active'
         });
     };
 
@@ -68,19 +98,33 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
 
             <main className="space-y-6 flex-1 overflow-y-auto pb-12">
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border-2 border-white space-y-6 relative overflow-hidden">
-                    {/* Background Glow */}
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#2b8cee]/10 blur-3xl rounded-full"></div>
 
-                    {/* Foto do Sonho */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Foto do seu Sonho 📸</label>
-                        <div className="relative aspect-square w-full max-w-[200px] mx-auto bg-slate-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-lg group">
+                        <div className="relative aspect-square w-full max-w-[240px] mx-auto bg-slate-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-lg group">
+                            
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                            />
+
+                            {isGenerating && (
+                                <div className="absolute inset-0 z-20 bg-blue-500/90 flex flex-col items-center justify-center text-white p-6 text-center backdrop-blur-sm">
+                                    <span className="material-symbols-outlined text-5xl animate-spin mb-4">auto_awesome</span>
+                                    <p className="font-black uppercase tracking-widest text-[10px] animate-pulse">Criando Magia...</p>
+                                </div>
+                            )}
+
                             {photo ? (
-                                <div className="relative w-full h-full">
+                                <div className="relative w-full h-full animate-pop-in">
                                     <img src={photo} className="w-full h-full object-cover" alt="Sonho" />
                                     <button 
                                         onClick={() => setPhoto(null)}
-                                        className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90"
+                                        className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all"
                                     >
                                         <span className="material-symbols-outlined text-sm">delete</span>
                                     </button>
@@ -90,19 +134,38 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                                     <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
                                     <button 
                                         onClick={takePhoto}
-                                        className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white w-14 h-14 rounded-full border-4 border-[#2b8cee] flex items-center justify-center shadow-xl active:scale-90"
+                                        className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white w-14 h-14 rounded-full border-4 border-[#2b8cee] flex items-center justify-center shadow-xl active:scale-90 transition-all"
                                     >
                                         <span className="material-symbols-outlined text-[#2b8cee] text-3xl">photo_camera</span>
                                     </button>
                                 </div>
                             ) : (
-                                <button 
-                                    onClick={startCamera}
-                                    className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-2 hover:text-[#2b8cee] transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-6xl">add_a_photo</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Ver o Sonho</span>
-                                </button>
+                                <div className="w-full h-full flex flex-col">
+                                    <button 
+                                        onClick={handleGenerateAI}
+                                        className="flex-[1.5] flex flex-col items-center justify-center bg-gradient-to-br from-[#2b8cee] to-purple-600 text-white gap-2 transition-all hover:brightness-110 active:scale-95 group overflow-hidden relative"
+                                    >
+                                        <div className="absolute inset-0 bg-white/10 animate-shimmer skew-x-[-20deg]"></div>
+                                        <span className="material-symbols-outlined text-4xl animate-float">auto_awesome</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest">IA Mágica</span>
+                                    </button>
+                                    <div className="flex-1 flex divide-x divide-slate-200">
+                                        <button 
+                                            onClick={startCamera}
+                                            className="flex-1 flex flex-col items-center justify-center text-slate-300 gap-1 hover:text-[#2b8cee] transition-colors hover:bg-white"
+                                        >
+                                            <span className="material-symbols-outlined text-2xl">photo_camera</span>
+                                            <span className="text-[8px] font-black uppercase tracking-widest">Câmera</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="flex-1 flex flex-col items-center justify-center text-slate-300 gap-1 hover:text-purple-500 transition-colors hover:bg-white"
+                                        >
+                                            <span className="material-symbols-outlined text-2xl">image</span>
+                                            <span className="text-[8px] font-black uppercase tracking-widest">Galeria</span>
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -119,7 +182,7 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Quanto você acha que custa?</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Preço Estimado</label>
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-4">
                                 <input 
@@ -136,12 +199,11 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                                     <span className="font-black text-amber-600 text-lg">{targetAmount}</span>
                                 </div>
                             </div>
-                            <p className="text-[9px] text-center text-slate-400 font-bold italic">Arraste para definir o valor em moedas mágicas!</p>
                         </div>
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Ícone da Categoria</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Ícone Mágico</label>
                         <div className="grid grid-cols-4 gap-3">
                             {DREAM_ICONS.map(i => (
                                 <button 
@@ -157,7 +219,7 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                 </div>
 
                 <button 
-                    disabled={!title}
+                    disabled={!title || isGenerating}
                     onClick={handleAdd}
                     className="w-full bg-emerald-500 text-white py-6 rounded-[2.5rem] font-black text-xl shadow-[0_8px_0_0_#059669] active-press disabled:opacity-50 disabled:grayscale transition-all flex items-center justify-center gap-3 relative overflow-hidden"
                 >

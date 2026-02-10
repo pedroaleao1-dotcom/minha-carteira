@@ -1,0 +1,106 @@
+
+import React, { useState } from 'react';
+import { Member, UserRole } from '../types';
+
+interface Props {
+    onSave: (member: Omit<Member, 'id' | 'level' | 'xp' | 'coins' | 'dreams' | 'tasks' | 'achievements' | 'redemptions' | 'history' | 'notifications'>) => void;
+    onBack: () => void;
+}
+
+const PRESET_AVATARS = [
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Buddy&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Willow&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=Sparky&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=Robo&backgroundColor=b6e3f4',
+];
+
+const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
+    const [name, setName] = useState('');
+    const [role, setRole] = useState<UserRole>('child');
+    const [avatar, setAvatar] = useState(PRESET_AVATARS[0]);
+
+    const handleSave = () => {
+        if (!name.trim()) return;
+        
+        onSave({
+            name,
+            role,
+            avatar,
+            badge: role === 'child' ? 'star' : 'settings'
+        });
+    };
+
+    return (
+        <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen">
+            <header className="flex items-center justify-between mb-10 pt-4">
+                <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-700 active:scale-90 transition-all">
+                    <span className="material-symbols-outlined">close</span>
+                </button>
+                <h1 className="text-xl font-black text-slate-800">Novo Integrante</h1>
+                <div className="w-12 h-12"></div>
+            </header>
+
+            <main className="space-y-8 flex-1 overflow-y-auto pb-12">
+                {/* Seleção de Papel */}
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => setRole('child')}
+                        className={`flex-1 p-6 rounded-[2rem] border-4 transition-all flex flex-col items-center gap-2 ${role === 'child' ? 'bg-[#2b8cee] border-white text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 grayscale'}`}
+                    >
+                        <span className="material-symbols-outlined text-4xl fill-1">rocket_launch</span>
+                        <span className="font-black uppercase tracking-widest text-[10px]">Herói</span>
+                    </button>
+                    <button 
+                        onClick={() => setRole('parent')}
+                        className={`flex-1 p-6 rounded-[2rem] border-4 transition-all flex flex-col items-center gap-2 ${role === 'parent' ? 'bg-slate-800 border-white text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 grayscale'}`}
+                    >
+                        <span className="material-symbols-outlined text-4xl fill-1">settings</span>
+                        <span className="font-black uppercase tracking-widest text-[10px]">Mentor</span>
+                    </button>
+                </div>
+
+                {/* Nome */}
+                <div className="space-y-2 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Qual o seu nome?</label>
+                    <input 
+                        type="text" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Ex: Pedro, Maria, Papai..."
+                        autoFocus
+                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-black text-slate-800 outline-none focus:border-[#2b8cee] transition-colors"
+                    />
+                </div>
+
+                {/* Avatares */}
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Escolha seu Visual</label>
+                    <div className="grid grid-cols-3 gap-4 px-2">
+                        {PRESET_AVATARS.map((url, i) => (
+                            <button 
+                                key={i}
+                                onClick={() => setAvatar(url)}
+                                className={`aspect-square rounded-[1.5rem] overflow-hidden border-4 transition-all ${avatar === url ? 'border-[#2b8cee] scale-110 shadow-lg' : 'border-white opacity-40 hover:opacity-100'}`}
+                            >
+                                <img src={url} className="w-full h-full object-cover" alt="" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <button 
+                    disabled={!name.trim()}
+                    onClick={handleSave}
+                    className="w-full bg-emerald-500 text-white py-6 rounded-[2.5rem] font-black text-xl shadow-[0_8px_0_0_#059669] active-press disabled:opacity-50 disabled:grayscale transition-all mt-4 flex items-center justify-center gap-3"
+                >
+                    <span className="material-symbols-outlined text-2xl">check_circle</span>
+                    ENTRAR NA AVENTURA!
+                </button>
+            </main>
+        </div>
+    );
+};
+
+export default AddMember;

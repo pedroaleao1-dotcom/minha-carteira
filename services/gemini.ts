@@ -1,7 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Fix: Use the API key directly from process.env.API_KEY as per guidelines
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getMasterTip = async (context: string) => {
@@ -16,5 +15,38 @@ export const getMasterTip = async (context: string) => {
     } catch (error) {
         console.error("Gemini Error:", error);
         return "Cada tarefa concluída te deixa mais perto do seu sonho!";
+    }
+};
+
+export const generateDreamImage = async (prompt: string) => {
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    {
+                        text: `Crie uma imagem vibrante, mágica e estilo animação 3D para crianças de um sonho: ${prompt}. Estilo alegre, cores vivas, alta qualidade.`,
+                    },
+                ],
+            },
+            config: {
+                imageConfig: {
+                    aspectRatio: "1:1"
+                }
+            }
+        });
+
+        const candidate = response.candidates?.[0];
+        if (candidate?.content?.parts) {
+            for (const part of candidate.content.parts) {
+                if (part.inlineData) {
+                    return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                }
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error("Image Generation Error:", error);
+        return null;
     }
 };

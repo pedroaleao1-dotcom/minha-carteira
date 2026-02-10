@@ -35,23 +35,20 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
 
     const xpForNextLevel = 500;
     const currentLevelXp = child.xp % xpForNextLevel;
     const xpPercent = (currentLevelXp / xpForNextLevel) * 100;
     
-    const completedTasks = child.tasks.filter(t => t.status === 'completed');
-    const recentTasks = [...completedTasks].reverse().slice(0, 5);
     const inventory = child.redemptions.filter(r => r.status === 'delivered');
-    
     const storeHistory = child.history.filter(tx => tx.type === 'purchase' || tx.type === 'sale').slice(0, 10);
-
     const notifications = child.notifications || { tasks: true, achievements: true };
 
     useEffect(() => {
         setXpUpdating(true);
-        const timer = setTimeout(() => setXpUpdating(false), 600);
+        const timer = setTimeout(() => setXpUpdating(false), 800);
         return () => clearTimeout(timer);
     }, [child.xp]);
 
@@ -85,6 +82,18 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                onUpdateAvatar(reader.result as string);
+                setIsAvatarPickerOpen(false);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const toggleNotif = (key: 'tasks' | 'achievements') => {
         if (onUpdateNotifications) {
             onUpdateNotifications({
@@ -96,6 +105,8 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50 min-h-screen relative pb-12">
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+
             {isCameraOpen && (
                 <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
                     {flash && <div className="absolute inset-0 bg-white z-[110]"></div>}
@@ -113,10 +124,11 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
                 <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm p-4" onClick={() => setIsAvatarPickerOpen(false)}>
                     <div className="w-full max-w-md bg-white rounded-[3rem] p-8 animate-slide-up shadow-2xl" onClick={e => e.stopPropagation()}>
                         <h3 className="text-xl font-black text-slate-800 mb-6 text-center">Mudar Visual</h3>
-                        <div className="grid grid-cols-3 gap-4 mb-8">
-                            <button onClick={startCamera} className="aspect-square rounded-3xl bg-blue-500 flex flex-col items-center justify-center text-white shadow-lg"><span className="material-symbols-outlined text-3xl">add_a_photo</span></button>
+                        <div className="grid grid-cols-4 gap-3 mb-8">
+                            <button onClick={startCamera} className="aspect-square rounded-2xl bg-blue-500 flex flex-col items-center justify-center text-white shadow-lg"><span className="material-symbols-outlined">photo_camera</span></button>
+                            <button onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-2xl bg-purple-500 flex flex-col items-center justify-center text-white shadow-lg"><span className="material-symbols-outlined">image</span></button>
                             {PRESET_AVATARS.map((url, i) => (
-                                <button key={i} onClick={() => { onUpdateAvatar(url); setIsAvatarPickerOpen(false); }} className={`aspect-square rounded-3xl overflow-hidden border-4 ${child.avatar === url ? 'border-blue-500' : 'border-slate-50'}`}><img src={url} className="w-full h-full object-cover" alt="" /></button>
+                                <button key={i} onClick={() => { onUpdateAvatar(url); setIsAvatarPickerOpen(false); }} className={`aspect-square rounded-2xl overflow-hidden border-4 ${child.avatar === url ? 'border-blue-500' : 'border-slate-50'}`}><img src={url} className="w-full h-full object-cover" alt="" /></button>
                             ))}
                         </div>
                     </div>
@@ -148,14 +160,25 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
                     <div className="bg-[#2b8cee] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 shadow-md">
                         Nível {child.level}
                     </div>
-                    <div className="w-full space-y-2">
-                        <div className="w-full h-4 bg-slate-100 rounded-full p-1 border border-slate-50 overflow-hidden">
-                            <div className="h-full bg-[#2b8cee] rounded-full transition-all duration-1000" style={{ width: `${xpPercent}%` }}></div>
+                    
+                    <div className={`w-full space-y-2 transition-all duration-500 ${xpUpdating ? 'scale-[1.02]' : 'scale-100'}`}>
+                        <div className={`w-full h-5 bg-slate-100 rounded-full p-1 border border-slate-50 overflow-hidden relative transition-all duration-500 ${xpUpdating ? 'shadow-[0_0_15px_rgba(43,140,238,0.4)] border-blue-200' : ''}`}>
+                            <div 
+                                className="h-full bg-[#2b8cee] rounded-full transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) relative overflow-hidden" 
+                                style={{ width: `${xpPercent}%` }}
+                            >
+                                <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/2 h-full skew-x-[-20deg] ${xpUpdating ? 'animate-shimmer' : 'hidden'}`}></div>
+                            </div>
+                        </div>
+                        <div className="flex justify-between px-2">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Experiência</span>
+                            <span className={`text-[8px] font-black uppercase tracking-widest transition-colors duration-300 ${xpUpdating ? 'text-blue-500' : 'text-slate-400'}`}>
+                                {currentLevelXp} / {xpForNextLevel} XP
+                            </span>
                         </div>
                     </div>
                 </section>
 
-                {/* Notificações Mágicas */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Notificações Mágicas 🔔</h3>
@@ -171,14 +194,8 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
                                     <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">Avisar quando houver tarefas</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => toggleNotif('tasks')}
-                                className={`w-12 h-6 rounded-full transition-all relative p-1 ${notifications.tasks ? 'bg-blue-500' : 'bg-slate-200'}`}
-                            >
-                                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-all transform ${notifications.tasks ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                            </button>
+                            <button onClick={() => toggleNotif('tasks')} className={`w-12 h-6 rounded-full transition-all relative p-1 ${notifications.tasks ? 'bg-blue-500' : 'bg-slate-200'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-all transform ${notifications.tasks ? 'translate-x-6' : 'translate-x-0'}`}></div></button>
                         </div>
-
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${notifications.achievements ? 'bg-amber-50 text-amber-500' : 'bg-slate-50 text-slate-300'}`}>
@@ -189,12 +206,7 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
                                     <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">Comemorar novas conquistas</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => toggleNotif('achievements')}
-                                className={`w-12 h-6 rounded-full transition-all relative p-1 ${notifications.achievements ? 'bg-amber-500' : 'bg-slate-200'}`}
-                            >
-                                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-all transform ${notifications.achievements ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                            </button>
+                            <button onClick={() => toggleNotif('achievements')} className={`w-12 h-6 rounded-full transition-all relative p-1 ${notifications.achievements ? 'bg-amber-500' : 'bg-slate-200'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-all transform ${notifications.achievements ? 'translate-x-6' : 'translate-x-0'}`}></div></button>
                         </div>
                     </div>
                 </section>
@@ -213,66 +225,16 @@ const Profile: React.FC<Props> = ({ child, storeItems, onNavigate, onBack, onUpd
                             inventory.map(item => {
                                 const originalItem = storeItems.find(si => si.id === item.itemId);
                                 return (
-                                    <div key={item.id} className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2">
+                                    <div key={item.id} className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 transition-all hover:scale-105 active:scale-95">
                                         <span className="material-symbols-outlined text-3xl">{item.icon}</span>
                                         <span className="text-[9px] font-black text-slate-800 text-center uppercase truncate w-full">{item.title}</span>
-                                        <div className="flex gap-2 w-full">
+                                        <div className="flex gap-2 w-full mt-1">
                                             <button onClick={() => originalItem && onBuyItem(originalItem)} className="flex-1 bg-emerald-50 text-emerald-600 py-2 rounded-xl text-[8px] font-black uppercase active:scale-95 transition-all">Buy</button>
                                             <button onClick={() => onSellItem(item.id)} className="flex-1 bg-red-50 text-red-600 py-2 rounded-xl text-[8px] font-black uppercase active:scale-95 transition-all">Sell</button>
                                         </div>
                                     </div>
                                 );
                             })
-                        )}
-                    </div>
-                </section>
-
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Histórico da Loja 🛒</h3>
-                    </div>
-                    
-                    <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-50 space-y-4">
-                        {storeHistory.length === 0 ? (
-                            <p className="py-4 text-center text-[10px] font-black uppercase text-slate-300">Nenhuma compra ou venda ainda.</p>
-                        ) : (
-                            storeHistory.map(tx => (
-                                <div key={tx.id} className="flex items-center gap-4 group">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tx.type === 'purchase' ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-500'}`}>
-                                        <span className="material-symbols-outlined text-xl">
-                                            {tx.type === 'purchase' ? 'shopping_bag' : 'payments'}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-800 text-xs leading-tight truncate">{tx.title}</h4>
-                                        <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{formatDate(tx.timestamp)}</p>
-                                    </div>
-                                    <div className={`text-right font-black text-sm whitespace-nowrap ${tx.amount > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                        {tx.amount > 0 ? '+' : ''}{tx.amount} 💰
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </section>
-
-                <section className="space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Missões Concluídas</h3>
-                    <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-50 space-y-4">
-                        {recentTasks.length === 0 ? (
-                            <p className="py-4 text-center text-[10px] font-black uppercase text-slate-400">Nenhuma missão concluída.</p>
-                        ) : (
-                            recentTasks.map(task => (
-                                <div key={task.id} className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 shrink-0">
-                                        <span className="material-symbols-outlined text-xl">{task.icon}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-800 text-xs leading-tight truncate">{task.title}</h4>
-                                    </div>
-                                    <div className="text-emerald-500 font-black text-sm">+{task.reward}💰</div>
-                                </div>
-                            ))
                         )}
                     </div>
                 </section>

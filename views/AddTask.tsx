@@ -72,7 +72,8 @@ const AddTask: React.FC<Props> = ({ onAdd, onBack }) => {
 
                 <button 
                     disabled={!title}
-                    onClick={() => onAdd({ title, reward, xp: reward * 2, icon })}
+                    // Fix: Added assignedTo: [] to match Omit<Task, 'id' | 'status'>
+                    onClick={() => onAdd({ title, reward, xp: reward * 2, icon, assignedTo: [] })}
                     className="w-full bg-[#2b8cee] text-white py-5 rounded-3xl font-black text-xl shadow-[0_6px_0_0_#1a6ac4] active-press disabled:opacity-50 mt-8"
                 >
                     CRIAR MISSÃO 🚀

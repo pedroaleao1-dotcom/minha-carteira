@@ -16,6 +16,7 @@ const RequestMission: React.FC<Props> = ({ onPropose, onBack }) => {
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const startCamera = async () => {
         try {
@@ -44,17 +45,28 @@ const RequestMission: React.FC<Props> = ({ onPropose, onBack }) => {
         setIsCameraOpen(false);
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhoto(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
-        <div className="flex-1 flex flex-col p-6 bg-blue-50">
+        <div className="flex-1 flex flex-col p-6 bg-blue-50 min-h-screen">
             <header className="flex items-center justify-between mb-8 pt-4">
-                <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-700">
+                <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-700 active:scale-90 transition-all">
                     <span className="material-symbols-outlined">close</span>
                 </button>
                 <h1 className="text-xl font-black text-slate-800">Propor Missão</h1>
                 <div className="w-12 h-12"></div>
             </header>
 
-            <main className="space-y-6">
+            <main className="space-y-6 flex-1 overflow-y-auto pb-12">
                 <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border-2 border-white space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">O que você vai fazer?</label>
@@ -63,7 +75,7 @@ const RequestMission: React.FC<Props> = ({ onPropose, onBack }) => {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Ex: Vou limpar o aquário"
-                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-800 outline-none focus:border-[#2b8cee]"
+                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-800 outline-none focus:border-[#2b8cee] transition-all"
                         />
                     </div>
 
@@ -85,12 +97,21 @@ const RequestMission: React.FC<Props> = ({ onPropose, onBack }) => {
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Foto da Missão (Opcional)</label>
                         <div className="relative aspect-video bg-slate-100 rounded-[2rem] overflow-hidden border-2 border-dashed border-slate-200">
+                            
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                            />
+
                             {photo ? (
                                 <div className="relative w-full h-full">
                                     <img src={photo} className="w-full h-full object-cover" alt="Proposta" />
                                     <button 
                                         onClick={() => setPhoto(null)}
-                                        className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center"
+                                        className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all"
                                     >
                                         <span className="material-symbols-outlined text-sm">delete</span>
                                     </button>
@@ -100,19 +121,28 @@ const RequestMission: React.FC<Props> = ({ onPropose, onBack }) => {
                                     <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
                                     <button 
                                         onClick={takePhoto}
-                                        className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white w-14 h-14 rounded-full border-4 border-blue-400 flex items-center justify-center"
+                                        className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white w-14 h-14 rounded-full border-4 border-blue-400 flex items-center justify-center shadow-xl active:scale-90 transition-all"
                                     >
                                         <span className="material-symbols-outlined text-blue-500">photo_camera</span>
                                     </button>
                                 </div>
                             ) : (
-                                <button 
-                                    onClick={startCamera}
-                                    className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-4xl">add_a_photo</span>
-                                    <span className="text-[10px] font-black uppercase">Tirar Foto do Desafio</span>
-                                </button>
+                                <div className="w-full h-full flex divide-x divide-slate-200">
+                                    <button 
+                                        onClick={startCamera}
+                                        className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2 hover:bg-white transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-3xl">photo_camera</span>
+                                        <span className="text-[9px] font-black uppercase">Câmera</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2 hover:bg-white transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-3xl">image</span>
+                                        <span className="text-[9px] font-black uppercase">Galeria</span>
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -121,7 +151,7 @@ const RequestMission: React.FC<Props> = ({ onPropose, onBack }) => {
                 <button 
                     disabled={!title}
                     onClick={() => onPropose({ title, icon, image: photo || undefined })}
-                    className="w-full bg-[#2b8cee] text-white py-6 rounded-3xl font-black text-xl shadow-[0_6px_0_0_#1a6ac4] active-press disabled:opacity-50"
+                    className="w-full bg-[#2b8cee] text-white py-6 rounded-3xl font-black text-xl shadow-[0_8px_0_0_#1a6ac4] active-press disabled:opacity-50 transition-all"
                 >
                     ENVIAR PARA OS PAIS 🕊️
                 </button>
