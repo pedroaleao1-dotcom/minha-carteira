@@ -1,0 +1,7 @@
+{
+  "name": "DreamQuest Kids",
+  "description": "A gamified task management application for kids and parents to turn daily chores into magical achievements.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
