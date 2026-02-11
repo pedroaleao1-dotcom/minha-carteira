@@ -20,11 +20,21 @@ export const updateGlobalSettings = async (settings: GlobalSettings) => {
 export const fetchLevelConfigs = async (): Promise<LevelConfig[]> => {
     const { data, error } = await supabase.from('level_configs').select('*').order('level_number');
     if (error) return [];
-    return data;
+    return data.map(lv => ({
+        level_number: lv.level_number,
+        xp_required: lv.xp_required,
+        coins_required: lv.coins_required || 0,
+        shield_icon: lv.shield_icon,
+        title: lv.title
+    }));
 };
 
 export const updateLevelConfig = async (config: LevelConfig) => {
     await supabase.from('level_configs').upsert(config);
+};
+
+export const deleteLevelConfig = async (levelNumber: number) => {
+    await supabase.from('level_configs').delete().eq('level_number', levelNumber);
 };
 
 export const fetchMembers = async (): Promise<Member[]> => {

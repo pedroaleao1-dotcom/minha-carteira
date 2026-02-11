@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export const getMasterTip = async (context: string) => {
     try {
@@ -14,6 +14,48 @@ export const getMasterTip = async (context: string) => {
     } catch (error) {
         console.error("Gemini Error:", error);
         return "Cada tarefa concluída te deixa mais perto do seu sonho!";
+    }
+};
+
+export const generateDreamSteps = async (dreamTitle: string) => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: `Crie um caminho de 5 passos simples e lúdicos para uma criança alcançar o objetivo: "${dreamTitle}". 
+            Retorne em formato JSON. Cada passo deve ter um título curto.`,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            title: { type: Type.STRING },
+                        },
+                        required: ["title"]
+                    }
+                }
+            }
+        });
+        
+        const data = JSON.parse(response.text || "[]");
+        return data.map((item: any, index: number) => ({
+            id: Math.random().toString(36).substr(2, 9),
+            title: item.title,
+            isCompleted: false,
+            orderIndex: index,
+            xpReward: (index + 1) * 50
+        }));
+    } catch (error) {
+        console.error("Gemini Steps Error:", error);
+        return [
+            { id: 's1', title: 'Primeiro Passo', isCompleted: false, orderIndex: 0, xpReward: 50 },
+            { id: 's2', title: 'Dedicação Diária', isCompleted: false, orderIndex: 1, xpReward: 100 },
+            { id: 's3', title: 'Grande Esforço', isCompleted: false, orderIndex: 2, xpReward: 150 },
+            { id: 's4', title: 'Quase Lá', isCompleted: false, orderIndex: 3, xpReward: 200 },
+            { id: 's5', title: 'Conquista Final', isCompleted: false, orderIndex: 4, xpReward: 250 }
+        ];
     }
 };
 

@@ -1,5 +1,7 @@
 
 export type UserRole = 'child' | 'parent';
+export type TaskFrequency = 'once' | 'daily';
+export type TaskCategory = 'study' | 'chore' | 'health' | 'fitness';
 
 export interface Transaction {
     id: string;
@@ -13,12 +15,21 @@ export interface Transaction {
 export interface LevelConfig {
     level_number: number;
     xp_required: number;
+    coins_required: number;
     shield_icon: string;
     title: string;
 }
 
 export interface GlobalSettings {
     allow_coin_creation: boolean;
+}
+
+export interface DreamStep {
+    id: string;
+    title: string;
+    isCompleted: boolean;
+    orderIndex: number;
+    xpReward: number;
 }
 
 export interface Member {
@@ -50,6 +61,7 @@ export interface Dream {
     estimatedAmount?: number;
     imageUrl?: string;
     status: 'active' | 'proposal';
+    steps?: DreamStep[];
 }
 
 export interface Task {
@@ -59,9 +71,12 @@ export interface Task {
     xp: number;
     status: 'todo' | 'pending' | 'completed' | 'proposal';
     icon: string;
+    frequency: TaskFrequency;
+    category: TaskCategory;
     proposalImage?: string;
     linkedDreamId?: string;
     assignedTo: string[];
+    lastCompletedAt?: number;
 }
 
 export interface StoreItem {
