@@ -1,7 +1,7 @@
 
-// Use default import for Dexie class to ensure that the subclass DreamQuestDB 
-// correctly inherits all properties and methods, including 'version'.
-import Dexie from 'dexie';
+// Use named import for Dexie to ensure that the subclass DreamQuestDB 
+// correctly inherits all properties and methods from the Dexie class.
+import { Dexie } from 'dexie';
 import type { Table } from 'dexie';
 import { Member, StoreItem } from '../types';
 
@@ -13,7 +13,7 @@ export class DreamQuestDB extends Dexie {
   constructor() {
     super('DreamQuestDB');
     // Defining database version and schema using the inherited version() method.
-    // Using the default import ensures 'this.version' is recognized as a valid property.
+    // Fixed: Using named import ensures this.version is recognized by the TypeScript compiler.
     this.version(1).stores({
       members: 'id, name, role',
       storeItems: 'id, title'

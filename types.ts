@@ -1,11 +1,22 @@
 
 export type UserRole = 'child' | 'parent';
-export type TaskFrequency = 'once' | 'daily';
+export type TaskFrequency = 'once' | 'daily' | 'weekly' | 'custom';
 export type TaskCategory = 'study' | 'chore' | 'health' | 'fitness';
+
+export interface TaskCompletion {
+    id: string;
+    taskId: string;
+    memberId: string;
+    completedAt: number;
+    taskTitle: string;
+    icon: string;
+    rewardCoins: number;
+    rewardXp: number;
+}
 
 export interface Transaction {
     id: string;
-    type: 'purchase' | 'sale' | 'reward' | 'investment' | 'bonus';
+    type: 'purchase' | 'sale' | 'reward' | 'investment' | 'bonus' | 'sale';
     title: string;
     amount: number;
     icon: string;
@@ -30,6 +41,9 @@ export interface DreamStep {
     isCompleted: boolean;
     orderIndex: number;
     xpReward: number;
+    xPos: number; // 0-100 (porcentagem da largura)
+    yPos: number; // 0-800+ (pixels de altura acumulada)
+    icon: string;
 }
 
 export interface Member {
@@ -43,6 +57,7 @@ export interface Member {
     coins: number;
     dreams: Dream[];
     tasks: Task[];
+    taskCompletions: TaskCompletion[];
     achievements: Achievement[];
     redemptions: Redemption[];
     history: Transaction[];
@@ -72,6 +87,7 @@ export interface Task {
     status: 'todo' | 'pending' | 'completed' | 'proposal';
     icon: string;
     frequency: TaskFrequency;
+    recurrenceText?: string;
     category: TaskCategory;
     proposalImage?: string;
     linkedDreamId?: string;

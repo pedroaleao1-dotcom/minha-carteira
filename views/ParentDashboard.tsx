@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Member, Task } from '../types';
+import ActivityCalendar from '../components/ActivityCalendar';
 
 interface Props {
     activeParent: Member;
@@ -11,10 +12,12 @@ interface Props {
     onAddStoreItem: () => void;
     onOpenCouncil: () => void;
     onPlay: () => void;
+    onEditMap: (dreamId: string) => void;
 }
 
-const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay }) => {
+const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap }) => {
     const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending'));
+    const children = members.filter(m => m.role === 'child');
 
     return (
         <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen">
@@ -49,14 +52,43 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                     <span className="material-symbols-outlined">chevron_right</span>
                 </button>
 
+                {/* Resumo de Atividades das Crianças */}
+                <section className="space-y-4">
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Monitor de Desempenho</h2>
+                    <div className="space-y-4">
+                        {children.map(child => (
+                            <div key={child.id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <img src={child.avatar} className="w-8 h-8 rounded-full border border-slate-100" />
+                                    <h3 className="font-black text-slate-800 text-sm">{child.name}</h3>
+                                </div>
+                                <ActivityCalendar completions={child.taskCompletions || []} />
+                                
+                                <div className="pt-2">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Editar Trilha de Sonhos:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {child.dreams.map(dream => (
+                                            <button 
+                                                key={dream.id}
+                                                onClick={() => onEditMap(dream.id)}
+                                                className="bg-sky-50 text-sky-600 px-3 py-2 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 border border-sky-100 active:scale-95 transition-all"
+                                            >
+                                                <span className="material-symbols-outlined text-xs">{dream.icon}</span>
+                                                {dream.title}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
                 <div className="grid grid-cols-1 gap-4">
                     <button 
                         onClick={onOpenCouncil}
                         className="w-full bg-slate-900 text-white p-6 rounded-[2.5rem] font-black shadow-2xl active-press flex items-center gap-4 relative overflow-hidden group"
                     >
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform">
-                            <span className="material-symbols-outlined text-7xl">gavel</span>
-                        </div>
                         <div className="w-14 h-14 bg-amber-500 text-slate-900 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
                             <span className="material-symbols-outlined text-3xl font-black">shield</span>
                         </div>
@@ -68,54 +100,35 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <button 
-                        onClick={onAddTask}
-                        className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3"
-                    >
-                        <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-2xl">add_task</span> 
-                        </div>
+                    <button onClick={onAddTask} className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-2xl">add_task</span></div>
                         <span className="text-[10px] uppercase tracking-widest text-center">Nova Missão</span>
                     </button>
-                    
-                    <button 
-                        onClick={onAddStoreItem}
-                        className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3"
-                    >
-                        <div className="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-2xl">redeem</span> 
-                        </div>
+                    <button onClick={onAddStoreItem} className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-2xl">redeem</span></div>
                         <span className="text-[10px] uppercase tracking-widest text-center">Novo Prêmio</span>
                     </button>
                 </div>
 
                 <section className="pt-2">
                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">Aprovações Pendentes ({allPendingTasks.length})</h2>
-
                     {allPendingTasks.length === 0 ? (
                         <div className="bg-white/50 rounded-[2.5rem] p-10 text-center border-2 border-dashed border-slate-200">
-                            <span className="material-symbols-outlined text-4xl text-slate-200 mb-2">verified</span>
                             <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Tudo em ordem!</p>
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-4 pb-12">
                             {allPendingTasks.map(task => (
                                 <div key={task.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 flex flex-col gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
-                                            <span className="material-symbols-outlined">{task.icon}</span>
-                                        </div>
+                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0"><span className="material-symbols-outlined">{task.icon}</span></div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate">{task.title}</h3>
+                                            <h3 className="font-bold text-slate-800 text-sm truncate">{task.title}</h3>
                                             <p className="text-[10px] text-amber-600 font-black uppercase">Recompensa: {task.reward} MOEDAS</p>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => onApprove(task.id)}
-                                        className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs active-press shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">check_circle</span>
-                                        APROVAR E PAGAR
+                                    <button onClick={() => onApprove(task.id)} className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs active-press shadow-lg flex items-center justify-center gap-2">
+                                        <span className="material-symbols-outlined text-sm">check_circle</span>APROVAR E PAGAR
                                     </button>
                                 </div>
                             ))}
