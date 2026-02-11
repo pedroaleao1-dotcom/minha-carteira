@@ -32,7 +32,8 @@ const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
                 xpReward: 50,
                 xPos: x,
                 yPos: y,
-                icon: 'star'
+                icon: 'star',
+                updatedAt: Date.now()
             };
             
             setSteps([...steps, newStep]);

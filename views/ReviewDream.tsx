@@ -8,12 +8,12 @@ interface Props {
     onBack: () => void;
 }
 
-// Fixed: Added assignedTo, frequency, and category to satisfy Task interface requirements
+// Fixed: Added assignedTo, frequency, category, and updatedAt to satisfy Task interface requirements
 const METAS_SUGESTOES: Omit<Task, 'id' | 'status'>[] = [
-    { title: 'Ajudar na Limpeza', reward: 30, xp: 60, icon: 'cleaning_services', assignedTo: [], frequency: 'daily', category: 'chore' },
-    { title: 'Ler 30 Minutos', reward: 20, xp: 40, icon: 'auto_stories', assignedTo: [], frequency: 'daily', category: 'study' },
-    { title: 'Arrumar os Brinquedos', reward: 15, xp: 30, icon: 'category', assignedTo: [], frequency: 'daily', category: 'chore' },
-    { title: 'Comer Vegetais', reward: 10, xp: 20, icon: 'restaurant', assignedTo: [], frequency: 'daily', category: 'health' },
+    { title: 'Ajudar na Limpeza', reward: 30, xp: 60, icon: 'cleaning_services', assignedTo: [], frequency: 'daily', category: 'chore', updatedAt: Date.now() },
+    { title: 'Ler 30 Minutos', reward: 20, xp: 40, icon: 'auto_stories', assignedTo: [], frequency: 'daily', category: 'study', updatedAt: Date.now() },
+    { title: 'Arrumar os Brinquedos', reward: 15, xp: 30, icon: 'category', assignedTo: [], frequency: 'daily', category: 'chore', updatedAt: Date.now() },
+    { title: 'Comer Vegetais', reward: 10, xp: 20, icon: 'restaurant', assignedTo: [], frequency: 'daily', category: 'health', updatedAt: Date.now() },
 ];
 
 const ReviewDream: React.FC<Props> = ({ dream, onConfirm, onBack }) => {

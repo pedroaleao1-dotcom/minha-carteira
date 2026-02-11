@@ -1,38 +1,30 @@
 
-// Use named import for Dexie to ensure that the subclass DreamQuestDB 
-// correctly inherits all properties and methods from the Dexie class.
-import { Dexie } from 'dexie';
-import type { Table } from 'dexie';
-import { Member, StoreItem } from '../types';
+import { Dexie, type Table } from 'dexie';
+import { Member, StoreItem, LevelConfig, GlobalSettings } from '../types';
 
-// Inherit from Dexie class to provide proper typing for 'version' and other methods.
+// Defining the database class extending Dexie
 export class DreamQuestDB extends Dexie {
   members!: Table<Member>;
   storeItems!: Table<StoreItem>;
+  levelConfigs!: Table<LevelConfig>;
+  globalSettings!: Table<GlobalSettings>;
 
   constructor() {
     super('DreamQuestDB');
-    // Defining database version and schema using the inherited version() method.
-    // Fixed: Using named import ensures this.version is recognized by the TypeScript compiler.
-    this.version(1).stores({
-      members: 'id, name, role',
-      storeItems: 'id, title'
+    // Using this.version to define the schema
+    this.version(2).stores({
+      members: 'id, name, role, updatedAt',
+      storeItems: 'id, title, updatedAt',
+      levelConfigs: 'level_number, updatedAt',
+      globalSettings: 'id, updatedAt'
     });
   }
 }
 
 export const db = new DreamQuestDB();
 
-export const saveAllMembers = async (members: Member[]) => {
-  await db.members.bulkPut(members);
-};
-
-export const saveAllStoreItems = async (items: StoreItem[]) => {
-  await db.storeItems.bulkPut(items);
-};
-
-export const loadInitialData = async () => {
-  const members = await db.members.toArray();
-  const storeItems = await db.storeItems.toArray();
-  return { members, storeItems };
-};
+// Helpers para acesso rápido local
+export const getLocalMembers = () => db.members.toArray();
+export const saveLocalMember = (member: Member) => db.members.put({ ...member, updatedAt: Date.now() });
+export const getLocalStoreItems = () => db.storeItems.toArray();
+export const saveLocalStoreItem = (item: StoreItem) => db.storeItems.put({ ...item, updatedAt: Date.now() });

@@ -3,7 +3,11 @@ export type UserRole = 'child' | 'parent';
 export type TaskFrequency = 'once' | 'daily' | 'weekly' | 'custom';
 export type TaskCategory = 'study' | 'chore' | 'health' | 'fitness';
 
-export interface TaskCompletion {
+export interface BaseEntity {
+    updatedAt: number;
+}
+
+export interface TaskCompletion extends BaseEntity {
     id: string;
     taskId: string;
     memberId: string;
@@ -14,16 +18,16 @@ export interface TaskCompletion {
     rewardXp: number;
 }
 
-export interface Transaction {
+export interface Transaction extends BaseEntity {
     id: string;
-    type: 'purchase' | 'sale' | 'reward' | 'investment' | 'bonus' | 'sale';
+    type: 'purchase' | 'sale' | 'reward' | 'investment' | 'bonus';
     title: string;
     amount: number;
     icon: string;
     timestamp: number;
 }
 
-export interface LevelConfig {
+export interface LevelConfig extends BaseEntity {
     level_number: number;
     xp_required: number;
     coins_required: number;
@@ -31,22 +35,22 @@ export interface LevelConfig {
     title: string;
 }
 
-export interface GlobalSettings {
+export interface GlobalSettings extends BaseEntity {
     allow_coin_creation: boolean;
 }
 
-export interface DreamStep {
+export interface DreamStep extends BaseEntity {
     id: string;
     title: string;
     isCompleted: boolean;
     orderIndex: number;
     xpReward: number;
-    xPos: number; // 0-100 (porcentagem da largura)
-    yPos: number; // 0-800+ (pixels de altura acumulada)
+    xPos: number;
+    yPos: number;
     icon: string;
 }
 
-export interface Member {
+export interface Member extends BaseEntity {
     id: string;
     name: string;
     avatar: string;
@@ -67,7 +71,7 @@ export interface Member {
     };
 }
 
-export interface Dream {
+export interface Dream extends BaseEntity {
     id: string;
     title: string;
     icon: string;
@@ -79,7 +83,7 @@ export interface Dream {
     steps?: DreamStep[];
 }
 
-export interface Task {
+export interface Task extends BaseEntity {
     id: string;
     title: string;
     reward: number;
@@ -95,7 +99,7 @@ export interface Task {
     lastCompletedAt?: number;
 }
 
-export interface StoreItem {
+export interface StoreItem extends BaseEntity {
     id: string;
     title: string;
     price: number;
@@ -104,7 +108,7 @@ export interface StoreItem {
     assignedTo: string[];
 }
 
-export interface Redemption {
+export interface Redemption extends BaseEntity {
     id: string;
     itemId: string;
     title: string;
@@ -113,7 +117,7 @@ export interface Redemption {
     timestamp: number;
 }
 
-export interface Achievement {
+export interface Achievement extends BaseEntity {
     id: string;
     title: string;
     description: string;
