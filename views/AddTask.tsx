@@ -29,6 +29,11 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
         );
     };
 
+    const selectAll = () => {
+        if (assignedTo.length === members.length) setAssignedTo([]);
+        else setAssignedTo(members.map(c => c.id));
+    };
+
     const isFormValid = title.trim() !== '' && assignedTo.length > 0;
 
     return (
@@ -118,7 +123,15 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
                 </div>
 
                 <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Designar Heróis</label>
+                    <div className="flex justify-between items-center px-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Designar Heróis</label>
+                        <button 
+                            onClick={selectAll}
+                            className="text-[10px] font-black text-sky-600 uppercase bg-sky-50 px-3 py-1 rounded-full"
+                        >
+                            {assignedTo.length === members.length ? 'Desmarcar' : 'Todos'}
+                        </button>
+                    </div>
                     <div className="flex flex-wrap gap-4 px-2">
                         {members.map(member => {
                             const isSelected = assignedTo.includes(member.id);
@@ -153,7 +166,8 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
                         frequency, 
                         category, 
                         assignedTo,
-                        recurrenceText: frequency === 'custom' ? recurrenceText : undefined
+                        recurrenceText: frequency === 'custom' ? recurrenceText : undefined,
+                        updatedAt: Date.now()
                     })}
                     className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] font-black text-lg shadow-[0_8px_0_0_#000] active-press disabled:opacity-50 mt-4 uppercase tracking-widest transition-all"
                 >

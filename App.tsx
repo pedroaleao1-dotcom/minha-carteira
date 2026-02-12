@@ -20,10 +20,11 @@ import AddMember from './views/AddMember';
 import CouncilRoom from './views/CouncilRoom';
 import JourneyPath from './views/JourneyPath';
 import MapEditor from './views/MapEditor';
+import Reports from './views/Reports'; // Nova View
 
 // Serviços
 import { db } from './services/db';
-import { supabase, pushToCloud, pullFromCloud, pushStoreItem } from './services/supabase';
+import { supabase, pushToCloud, pullFromCloud, pushStoreItem, upsertMember } from './services/supabase';
 
 type View = 
     | 'role' 
@@ -42,7 +43,8 @@ type View =
     | 'add_member' 
     | 'council_room' 
     | 'journey' 
-    | 'map_editor';
+    | 'map_editor'
+    | 'reports';
 
 const App: React.FC = () => {
     const [view, setView] = useState<View>('role');
@@ -75,21 +77,11 @@ const App: React.FC = () => {
         if (!navigator.onLine || isSyncing) return;
         setIsSyncing(true);
         try {
-            // 1. Puxar do Cloud (Atualiza local se o cloud for mais novo)
             await pullFromCloud();
-            
-            // 2. Empurrar alterações locais para o Cloud
             const localMembers = await db.members.toArray();
-            for (const m of localMembers) {
-                await pushToCloud(m);
-            }
-            
+            for (const m of localMembers) { await pushToCloud(m); }
             const localStore = await db.storeItems.toArray();
-            for (const item of localStore) {
-                await pushStoreItem(item);
-            }
-
-            // Recarregar estado da UI após sync
+            for (const item of localStore) { await pushStoreItem(item); }
             const updatedMembers = await db.members.toArray();
             setMembers(updatedMembers);
             const updatedStore = await db.storeItems.toArray();
@@ -101,7 +93,7 @@ const App: React.FC = () => {
         }
     };
 
-    // Carregamento Inicial (Local-First)
+    // Carregamento Inicial
     useEffect(() => {
         const init = async () => {
             setIsLoading(true);
@@ -110,8 +102,6 @@ const App: React.FC = () => {
             setMembers(localMembers);
             setStoreItems(localStore);
             setIsLoading(false);
-            
-            // Tenta sync se estiver online
             if (navigator.onLine) syncData();
         };
         init();
@@ -120,14 +110,9 @@ const App: React.FC = () => {
     const updateMemberById = async (id: string, updater: (m: Member) => Member) => {
         const currentMember = members.find(m => m.id === id);
         if (!currentMember) return;
-        
         const updated = { ...updater(currentMember), updatedAt: Date.now() };
-        
-        // 1. Salva Local (Instantâneo)
         await db.members.put(updated);
         setMembers(prev => prev.map(m => m.id === id ? updated : m));
-        
-        // 2. Tenta Cloud (Background)
         if (navigator.onLine) pushToCloud(updated);
     };
 
@@ -135,6 +120,38 @@ const App: React.FC = () => {
         setActiveMemberId(null);
         setSelectedDreamId(null);
         setView('role');
+    };
+
+    const approveTask = async (taskId: string) => {
+        const now = Date.now();
+        const memberToUpdate = members.find(m => m.tasks.some(t => t.id === taskId && t.status === 'pending'));
+        if (!memberToUpdate) return;
+        const task = memberToUpdate.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const newCompletion: TaskCompletion = {
+            id: Math.random().toString(36).substr(2, 9),
+            taskId: task.id,
+            memberId: memberToUpdate.id,
+            completedAt: now,
+            taskTitle: task.title,
+            icon: task.icon,
+            rewardCoins: task.reward,
+            rewardXp: task.xp,
+            updatedAt: now
+        };
+
+        await updateMemberById(memberToUpdate.id, m => {
+            const newStatus = (task.frequency === 'daily' || task.frequency === 'custom') ? 'todo' : 'completed';
+            return {
+                ...m,
+                tasks: m.tasks.map(t => t.id === taskId ? { ...t, status: newStatus as any, lastCompletedAt: now } : t),
+                taskCompletions: [...(m.taskCompletions || []), newCompletion],
+                coins: m.coins + task.reward,
+                xp: m.xp + task.xp,
+                history: [{ id: `tx-rew-${now}`, type: 'reward', title: `Missão: ${task.title}`, amount: task.reward, icon: task.icon, timestamp: now, updatedAt: now }, ...m.history]
+            };
+        });
     };
 
     const renderView = () => {
@@ -154,7 +171,8 @@ const App: React.FC = () => {
                 if (!activeMember) return null;
                 switch (view) {
                     case 'child_dash': return <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={handleLogout} />;
-                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={members} onApprove={(id) => { /* lógica de aprovação aqui usando updateMemberById */ }} onLogout={handleLogout} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setView('map_editor'); }} />;
+                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={members} onApprove={approveTask} onLogout={handleLogout} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setView('map_editor'); }} onOpenReports={() => setView('reports')} />;
+                    case 'reports': return <Reports members={members.filter(m => m.role === 'child')} onBack={() => setView('parent_dash')} />;
                     case 'journey': return <JourneyPath member={activeMember} onSelectDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onBack={() => setView('child_dash')} />;
                     case 'map_editor': return selectedDream ? <MapEditor dream={selectedDream} onSave={(steps) => updateMemberById(activeMember.id, m => ({...m, dreams: m.dreams.map(d => d.id === selectedDreamId ? {...d, steps} : d)}))} onBack={() => setView('parent_dash')} /> : null;
                     case 'dream_gallery': return <DreamGallery dreams={activeMember.dreams} onSelect={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onAdd={() => setView('add_dream')} onBack={() => setView('child_dash')} />;

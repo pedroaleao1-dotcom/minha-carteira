@@ -4,9 +4,11 @@ import { TaskCompletion } from '../types';
 
 interface Props {
     completions: TaskCompletion[];
+    onSelectDay?: (day: number, completions: TaskCompletion[]) => void;
+    selectedDay?: number | null;
 }
 
-const ActivityCalendar: React.FC<Props> = ({ completions }) => {
+const ActivityCalendar: React.FC<Props> = ({ completions, onSelectDay, selectedDay }) => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
@@ -18,8 +20,8 @@ const ActivityCalendar: React.FC<Props> = ({ completions }) => {
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const blanks = Array.from({ length: firstDayIndex }, (_, i) => i);
 
-    const isDayCompleted = (day: number) => {
-        return completions.some(c => {
+    const getCompletionsForDay = (day: number) => {
+        return completions.filter(c => {
             const date = new Date(c.completedAt);
             return date.getDate() === day && date.getMonth() === currentMonth && date.getFullYear() === currentYear;
         });
@@ -33,7 +35,7 @@ const ActivityCalendar: React.FC<Props> = ({ completions }) => {
                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{monthNames[currentMonth]} {currentYear}</h3>
                 <div className="flex gap-1">
                     <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                    <span className="text-[8px] font-black text-slate-400 uppercase">Missões</span>
+                    <span className="text-[8px] font-black text-slate-400 uppercase">Atividade</span>
                 </div>
             </div>
 
@@ -45,20 +47,31 @@ const ActivityCalendar: React.FC<Props> = ({ completions }) => {
                 {blanks.map(b => <div key={`b-${b}`} />)}
                 
                 {days.map(day => {
-                    const completed = isDayCompleted(day);
+                    const dayCompletions = getCompletionsForDay(day);
+                    const completed = dayCompletions.length > 0;
                     const isToday = day === today.getDate();
+                    const isSelected = selectedDay === day;
 
                     return (
-                        <div 
+                        <button 
                             key={day}
+                            disabled={!onSelectDay}
+                            onClick={() => onSelectDay?.(day, dayCompletions)}
                             className={`
-                                aspect-square rounded-xl flex items-center justify-center text-[10px] font-black transition-all
-                                ${completed ? 'bg-emerald-500 text-white shadow-md scale-105' : 'bg-slate-50 text-slate-400'}
+                                aspect-square rounded-xl flex items-center justify-center text-[10px] font-black transition-all relative
+                                ${completed ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 text-slate-400'}
                                 ${isToday && !completed ? 'border-2 border-sky-400' : ''}
+                                ${isSelected ? 'scale-110 ring-4 ring-emerald-200 z-10' : 'hover:scale-105'}
+                                ${!onSelectDay ? 'cursor-default' : 'active:scale-95'}
                             `}
                         >
                             {day}
-                        </div>
+                            {dayCompletions.length > 1 && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-white rounded-full flex items-center justify-center text-[8px] border border-white">
+                                    {dayCompletions.length}
+                                </div>
+                            )}
+                        </button>
                     );
                 })}
             </div>

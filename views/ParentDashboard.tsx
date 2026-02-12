@@ -13,9 +13,10 @@ interface Props {
     onOpenCouncil: () => void;
     onPlay: () => void;
     onEditMap: (dreamId: string) => void;
+    onOpenReports: () => void;
 }
 
-const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap }) => {
+const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports }) => {
     const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending'));
     const children = members.filter(m => m.role === 'child');
 
@@ -38,23 +39,28 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
             </header>
 
             <main className="space-y-6">
-                <button 
-                    onClick={onPlay}
-                    className="w-full bg-gradient-to-br from-blue-500 to-blue-700 text-white p-6 rounded-[2.5rem] font-black shadow-xl active-press flex items-center gap-4"
-                >
-                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={onPlay}
+                        className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-6 rounded-[2rem] font-black shadow-xl active-press flex flex-col items-center gap-3"
+                    >
                         <span className="material-symbols-outlined text-3xl">sports_esports</span>
-                    </div>
-                    <div className="flex-1 text-left">
-                        <h3 className="text-lg leading-none mb-1">Entrar no Jogo</h3>
-                        <p className="text-[10px] opacity-80 uppercase tracking-widest">Ver como os heróis!</p>
-                    </div>
-                    <span className="material-symbols-outlined">chevron_right</span>
-                </button>
+                        <span className="text-[10px] uppercase tracking-widest text-center">Entrar no Jogo</span>
+                    </button>
+                    <button 
+                        onClick={onOpenReports}
+                        className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center gap-3"
+                    >
+                        <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+                            <span className="material-symbols-outlined text-2xl">analytics</span>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-widest text-center">Relatórios</span>
+                    </button>
+                </div>
 
                 {/* Resumo de Atividades das Crianças */}
                 <section className="space-y-4">
-                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Monitor de Desempenho</h2>
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Monitor Rápido</h2>
                     <div className="space-y-4">
                         {children.map(child => (
                             <div key={child.id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 space-y-4">
@@ -63,22 +69,6 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                                     <h3 className="font-black text-slate-800 text-sm">{child.name}</h3>
                                 </div>
                                 <ActivityCalendar completions={child.taskCompletions || []} />
-                                
-                                <div className="pt-2">
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Editar Trilha de Sonhos:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {child.dreams.map(dream => (
-                                            <button 
-                                                key={dream.id}
-                                                onClick={() => onEditMap(dream.id)}
-                                                className="bg-sky-50 text-sky-600 px-3 py-2 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 border border-sky-100 active:scale-95 transition-all"
-                                            >
-                                                <span className="material-symbols-outlined text-xs">{dream.icon}</span>
-                                                {dream.title}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
                             </div>
                         ))}
                     </div>
@@ -94,7 +84,7 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                         </div>
                         <div className="flex-1 text-left relative z-10">
                             <h3 className="text-lg leading-none mb-1">Sala do Conselho</h3>
-                            <p className="text-[10px] text-amber-400 uppercase tracking-widest font-black">Controles do Reino & Moedas</p>
+                            <p className="text-[10px] text-amber-400 uppercase tracking-widest font-black">Controles & Moedas</p>
                         </div>
                     </button>
                 </div>
@@ -111,7 +101,7 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                 </div>
 
                 <section className="pt-2">
-                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">Aprovações Pendentes ({allPendingTasks.length})</h2>
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">Aprovações ({allPendingTasks.length})</h2>
                     {allPendingTasks.length === 0 ? (
                         <div className="bg-white/50 rounded-[2.5rem] p-10 text-center border-2 border-dashed border-slate-200">
                             <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Tudo em ordem!</p>
@@ -124,7 +114,7 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                                         <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0"><span className="material-symbols-outlined">{task.icon}</span></div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-slate-800 text-sm truncate">{task.title}</h3>
-                                            <p className="text-[10px] text-amber-600 font-black uppercase">Recompensa: {task.reward} MOEDAS</p>
+                                            <p className="text-[10px] text-amber-600 font-black uppercase">Prêmio: {task.reward} MOEDAS</p>
                                         </div>
                                     </div>
                                     <button onClick={() => onApprove(task.id)} className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs active-press shadow-lg flex items-center justify-center gap-2">

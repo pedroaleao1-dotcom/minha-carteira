@@ -4,14 +4,17 @@ import { Member, StoreItem, LevelConfig, GlobalSettings } from '../types';
 
 // Defining the database class extending Dexie
 export class DreamQuestDB extends Dexie {
-  members!: Table<Member>;
-  storeItems!: Table<StoreItem>;
-  levelConfigs!: Table<LevelConfig>;
-  globalSettings!: Table<GlobalSettings>;
+  // Use definite assignment assertions for tables
+  members!: Table<Member, string>;
+  storeItems!: Table<StoreItem, string>;
+  levelConfigs!: Table<LevelConfig, number>;
+  globalSettings!: Table<GlobalSettings, string>;
 
   constructor() {
     super('DreamQuestDB');
-    // Using this.version to define the schema
+    
+    // Explicitly define the schema versions
+    // Fix: Use named import { Dexie } to ensure 'version' and other instance methods are correctly typed
     this.version(2).stores({
       members: 'id, name, role, updatedAt',
       storeItems: 'id, title, updatedAt',
