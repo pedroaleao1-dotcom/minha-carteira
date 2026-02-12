@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
+// Master tip generation for children - Basic task using flash model
 export const getMasterTip = async (context: string) => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -10,6 +11,7 @@ export const getMasterTip = async (context: string) => {
             Gere uma dica curta, motivadora e divertida (em português) para uma criança sobre: ${context}. 
             Máximo 20 palavras.`,
         });
+        // Accessing .text property directly as per guidelines
         return response.text || "Continue brilhando, pequeno explorador!";
     } catch (error) {
         console.error("Gemini Error:", error);
@@ -17,11 +19,12 @@ export const getMasterTip = async (context: string) => {
     }
 };
 
+// Dream steps generation - Complex reasoning task using pro model
 export const generateDreamSteps = async (dreamTitle: string) => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
+            model: "gemini-3-pro-preview",
             contents: `Crie um caminho de 5 passos simples e lúdicos para uma criança alcançar o objetivo: "${dreamTitle}". 
             Retorne em formato JSON. Cada passo deve ter um título curto.`,
             config: {
@@ -39,6 +42,7 @@ export const generateDreamSteps = async (dreamTitle: string) => {
             }
         });
         
+        // Accessing .text property directly as per guidelines
         const data = JSON.parse(response.text || "[]");
         return data.map((item: any, index: number) => ({
             id: Math.random().toString(36).substr(2, 9),
@@ -59,6 +63,7 @@ export const generateDreamSteps = async (dreamTitle: string) => {
     }
 };
 
+// Image generation for dreams using flash-image model
 export const generateDreamImage = async (prompt: string) => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -82,9 +87,9 @@ export const generateDreamImage = async (prompt: string) => {
             }
         });
 
-        const candidate = response.candidates?.[0];
-        if (candidate?.content?.parts) {
-            for (const part of candidate.content.parts) {
+        // Iterate through candidates and parts to find the image part as per guidelines
+        if (response.candidates?.[0]?.content?.parts) {
+            for (const part of response.candidates[0].content.parts) {
                 if (part.inlineData) {
                     return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
                 }

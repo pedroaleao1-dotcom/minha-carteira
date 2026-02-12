@@ -7,6 +7,14 @@ export interface BaseEntity {
     updatedAt: number;
 }
 
+export interface JourneyTemplate extends BaseEntity {
+    id: string;
+    title: string;
+    description?: string;
+    icon: string;
+    steps: DreamStep[];
+}
+
 export interface TaskCompletion extends BaseEntity {
     id: string;
     taskId: string;
@@ -81,6 +89,7 @@ export interface Dream extends BaseEntity {
     imageUrl?: string;
     status: 'active' | 'proposal';
     steps?: DreamStep[];
+    templateId?: string; // ID do mapa global, se houver
 }
 
 export interface Task extends BaseEntity {

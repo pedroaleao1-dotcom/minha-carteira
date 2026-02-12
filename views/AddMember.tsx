@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Member, UserRole } from '../types';
 
 interface Props {
+    memberToEdit?: Member | null;
     onSave: (member: Omit<Member, 'id' | 'level' | 'xp' | 'coins' | 'dreams' | 'tasks' | 'achievements' | 'redemptions' | 'history' | 'notifications'>) => void;
     onBack: () => void;
 }
@@ -16,10 +17,10 @@ const PRESET_AVATARS = [
     'https://api.dicebear.com/7.x/bottts/svg?seed=Robo&backgroundColor=b6e3f4',
 ];
 
-const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
-    const [name, setName] = useState('');
-    const [role, setRole] = useState<UserRole>('child');
-    const [avatar, setAvatar] = useState(PRESET_AVATARS[0]);
+const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
+    const [name, setName] = useState(memberToEdit?.name || '');
+    const [role, setRole] = useState<UserRole>(memberToEdit?.role || 'child');
+    const [avatar, setAvatar] = useState(memberToEdit?.avatar || PRESET_AVATARS[0]);
 
     const handleSave = () => {
         if (!name.trim()) return;
@@ -38,7 +39,7 @@ const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
                 <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-700 active:scale-90 transition-all">
                     <span className="material-symbols-outlined">close</span>
                 </button>
-                <h1 className="text-xl font-black text-slate-800">Novo Integrante</h1>
+                <h1 className="text-xl font-black text-slate-800">{memberToEdit ? 'Editar Integrante' : 'Novo Integrante'}</h1>
                 <div className="w-12 h-12"></div>
             </header>
 
@@ -63,7 +64,7 @@ const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
 
                 {/* Nome */}
                 <div className="space-y-2 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Qual o seu nome?</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Qual o nome?</label>
                     <input 
                         type="text" 
                         value={name}
@@ -76,7 +77,7 @@ const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
 
                 {/* Avatares */}
                 <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Escolha seu Visual</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Escolha o Visual</label>
                     <div className="grid grid-cols-3 gap-4 px-2">
                         {PRESET_AVATARS.map((url, i) => (
                             <button 
@@ -87,6 +88,15 @@ const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
                                 <img src={url} className="w-full h-full object-cover" alt="" />
                             </button>
                         ))}
+                        {/* Se for edição e tiver avatar customizado, mostrar ele também */}
+                        {memberToEdit && !PRESET_AVATARS.includes(memberToEdit.avatar) && (
+                            <button 
+                                onClick={() => setAvatar(memberToEdit.avatar)}
+                                className={`aspect-square rounded-[1.5rem] overflow-hidden border-4 transition-all ${avatar === memberToEdit.avatar ? 'border-[#2b8cee] scale-110 shadow-lg' : 'border-white'}`}
+                            >
+                                <img src={memberToEdit.avatar} className="w-full h-full object-cover" alt="" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -95,8 +105,8 @@ const AddMember: React.FC<Props> = ({ onSave, onBack }) => {
                     onClick={handleSave}
                     className="w-full bg-emerald-500 text-white py-6 rounded-[2.5rem] font-black text-xl shadow-[0_8px_0_0_#059669] active-press disabled:opacity-50 disabled:grayscale transition-all mt-4 flex items-center justify-center gap-3"
                 >
-                    <span className="material-symbols-outlined text-2xl">check_circle</span>
-                    ENTRAR NA AVENTURA!
+                    <span className="material-symbols-outlined text-2xl">{memberToEdit ? 'save' : 'check_circle'}</span>
+                    {memberToEdit ? 'SALVAR ALTERAÇÕES' : 'ENTRAR NA AVENTURA!'}
                 </button>
             </main>
         </div>

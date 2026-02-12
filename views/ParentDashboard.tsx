@@ -13,13 +13,16 @@ interface Props {
     onPlay: () => void;
     onEditMap: (dreamId: string) => void;
     onOpenReports: () => void;
+    onManageMembers: () => void;
+    onManageTemplates: () => void; // Novo callback
 }
 
-const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports }) => {
+const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports, onManageMembers, onManageTemplates }) => {
     const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending'));
+    const children = members.filter(m => m.role === 'child');
 
     return (
-        <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen">
+        <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen pb-24">
             <header className="flex items-center justify-between mb-8 pt-4">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-white overflow-hidden border-2 border-[#2b8cee] shadow-md shrink-0">
@@ -58,18 +61,71 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
 
                 <div className="grid grid-cols-1 gap-4">
                     <button 
-                        onClick={onOpenCouncil}
+                        onClick={onManageMembers}
                         className="w-full bg-slate-900 text-white p-6 rounded-[2.5rem] font-black shadow-2xl active-press flex items-center gap-4 relative overflow-hidden group"
                     >
-                        <div className="w-14 h-14 bg-amber-500 text-slate-900 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
-                            <span className="material-symbols-outlined text-3xl font-black">shield</span>
+                        <div className="w-14 h-14 bg-indigo-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+                            <span className="material-symbols-outlined text-3xl font-black">group</span>
                         </div>
                         <div className="flex-1 text-left relative z-10">
-                            <h3 className="text-lg leading-none mb-1">Sala do Conselho</h3>
-                            <p className="text-[10px] text-amber-400 uppercase tracking-widest font-black">Controles & Moedas</p>
+                            <h3 className="text-lg leading-none mb-1 text-indigo-400">Membros do Reino</h3>
+                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Gerenciar Habitantes</p>
                         </div>
+                        <span className="material-symbols-outlined text-white/5 text-6xl absolute -right-2 top-0">badge</span>
                     </button>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={onManageTemplates}
+                        className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3"
+                    >
+                        <div className="w-12 h-12 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-2xl">map</span></div>
+                        <span className="text-[10px] uppercase tracking-widest text-center">Mapas Reino</span>
+                    </button>
+                    <button 
+                        onClick={onOpenCouncil}
+                        className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3"
+                    >
+                        <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-2xl">shield</span></div>
+                        <span className="text-[10px] uppercase tracking-widest text-center">Conselho</span>
+                    </button>
+                </div>
+
+                {/* Seção de Gestão de Jornadas Individuais */}
+                <section className="pt-2">
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">Heróis & Jornadas Ativas</h2>
+                    <div className="space-y-3">
+                        {children.map(child => (
+                            <div key={child.id} className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <img src={child.avatar} className="w-8 h-8 rounded-full border border-slate-100" />
+                                    <span className="font-black text-xs text-slate-800 uppercase">{child.name}</span>
+                                </div>
+                                {child.dreams.length === 0 ? (
+                                    <p className="text-[9px] text-slate-300 font-bold uppercase text-center py-2">Sem sonhos ativos</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {child.dreams.filter(d => d.status === 'active').map(dream => (
+                                            <div key={dream.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="material-symbols-outlined text-blue-500 text-lg">{dream.icon}</span>
+                                                    <span className="text-[10px] font-bold text-slate-600 truncate max-w-[120px]">{dream.title}</span>
+                                                </div>
+                                                <button 
+                                                    onClick={() => onEditMap(dream.id)}
+                                                    className="bg-[#2b8cee] text-white px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all"
+                                                >
+                                                    Mapa Herói
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
                 <div className="grid grid-cols-2 gap-4">
                     <button onClick={onAddTask} className="bg-white text-slate-800 p-6 rounded-[2rem] font-black shadow-sm border border-slate-100 active-press flex flex-col items-center justify-center gap-3">
@@ -89,9 +145,9 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                             <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Tudo em ordem!</p>
                         </div>
                     ) : (
-                        <div className="space-y-4 pb-12">
+                        <div className="space-y-4">
                             {allPendingTasks.map(task => (
-                                <div key={task.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 flex flex-col gap-4">
+                                <div key={task.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 flex flex-col gap-4 animate-pop-in">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0"><span className="material-symbols-outlined">{task.icon}</span></div>
                                         <div className="flex-1 min-w-0">

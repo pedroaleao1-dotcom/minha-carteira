@@ -1,24 +1,25 @@
 
-import React, { useState, useRef } from 'react';
-import { Dream, DreamStep } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Dream, DreamStep, JourneyTemplate } from '../types';
 
 interface Props {
-    dream: Dream;
-    onSave: (steps: DreamStep[]) => void;
+    dream?: Dream; // Para jornada individual
+    template?: JourneyTemplate; // Para jornada global
+    onSave: (steps: DreamStep[], title?: string) => void;
     onBack: () => void;
 }
 
 const STEP_ICONS = ['star', 'bolt', 'auto_awesome', 'menu_book', 'sports_esports', 'pets', 'rocket_launch', 'celebration', 'diamond'];
 
-const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
-    const [steps, setSteps] = useState<DreamStep[]>(dream.steps || []);
+const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
+    const [steps, setSteps] = useState<DreamStep[]>(template?.steps || dream?.steps || []);
+    const [title, setTitle] = useState(template?.title || dream?.title || '');
     const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
 
     const handleCanvasClick = (e: React.MouseEvent) => {
         if (!canvasRef.current) return;
         
-        // Se clicar no fundo vazio, adiciona um novo nodo ou deseleciona
         if (e.target === canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
             const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
@@ -58,27 +59,36 @@ const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
                 <button onClick={onBack} className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
                     <span className="material-symbols-outlined">close</span>
                 </button>
-                <div className="text-center">
-                    <h1 className="text-xs font-black uppercase text-amber-500 tracking-widest">Editor de Jornada</h1>
-                    <p className="text-[10px] text-slate-500 font-bold">{dream.title}</p>
+                <div className="text-center flex-1 mx-4">
+                    {template ? (
+                        <input 
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="bg-transparent border-b border-white/20 text-center font-black uppercase text-amber-500 tracking-widest text-xs outline-none focus:border-amber-500 w-full"
+                            placeholder="Nome do Mapa Global"
+                        />
+                    ) : (
+                        <>
+                            <h1 className="text-xs font-black uppercase text-amber-500 tracking-widest">Editor de Jornada</h1>
+                            <p className="text-[10px] text-slate-500 font-bold truncate max-w-[150px] mx-auto">{dream?.title}</p>
+                        </>
+                    )}
                 </div>
                 <button 
-                    onClick={() => onSave(steps)}
-                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20"
+                    onClick={() => onSave(steps, title)}
+                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 active:scale-95"
                 >
-                    Salvar Mapa
+                    Salvar
                 </button>
             </header>
 
-            <main className="flex-1 relative overflow-x-hidden flex flex-col">
-                {/* Canvas de Desenho */}
+            <main className="flex-1 relative overflow-hidden flex flex-col">
                 <div 
                     ref={canvasRef}
                     onClick={handleCanvasClick}
                     className="flex-1 bg-slate-950 grid-bg opacity-40 relative cursor-crosshair overflow-y-auto"
-                    style={{ minHeight: '1200px', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+                    style={{ minHeight: '1500px', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
                 >
-                    {/* Linhas de Conexão */}
                     <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
                         {steps.length > 1 && steps.map((step, i) => {
                             if (i === 0) return null;
@@ -100,7 +110,6 @@ const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
                         })}
                     </svg>
 
-                    {/* Nodos do Mapa */}
                     {steps.map((step) => (
                         <div 
                             key={step.id}
@@ -122,12 +131,11 @@ const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
                         </div>
                     ))}
 
-                    <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none">
-                        <p className="text-[10px] text-slate-600 font-black uppercase">Toque em qualquer lugar para adicionar um passo</p>
+                    <div className="absolute top-10 left-0 right-0 text-center pointer-events-none opacity-50">
+                        <p className="text-[10px] text-white font-black uppercase tracking-[0.3em]">Toque no fundo para criar novos caminhos</p>
                     </div>
                 </div>
 
-                {/* Painel de Edição do Nodo selecionado */}
                 {selectedStep && (
                     <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-white/10 p-6 rounded-t-[3rem] shadow-2xl z-50 animate-slide-up">
                         <div className="max-w-md mx-auto space-y-4">
@@ -165,7 +173,7 @@ const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2 overflow-x-auto pb-2">
+                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                                 {STEP_ICONS.map(i => (
                                     <button 
                                         key={i}
@@ -179,7 +187,7 @@ const MapEditor: React.FC<Props> = ({ dream, onSave, onBack }) => {
 
                             <button 
                                 onClick={() => setSelectedStepId(null)}
-                                className="w-full py-4 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase shadow-xl"
+                                className="w-full py-4 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase shadow-xl active:scale-95"
                             >
                                 Confirmar Passo
                             </button>
