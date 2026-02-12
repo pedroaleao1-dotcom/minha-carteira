@@ -4,13 +4,14 @@ import { Dream, Member, DreamStep } from '../types';
 
 interface Props {
     member: Member;
+    selectedDreamId?: string;
     onSelectDream: (id: string) => void;
     onBack: () => void;
 }
 
-const JourneyPath: React.FC<Props> = ({ member, onSelectDream, onBack }) => {
-    // Pegamos o primeiro sonho ativo para mostrar a trilha detalhada dele
-    const activeDream = member.dreams.find(d => d.status === 'active');
+const JourneyPath: React.FC<Props> = ({ member, selectedDreamId, onSelectDream, onBack }) => {
+    // Busca o sonho selecionado ou o primeiro sonho ativo
+    const activeDream = member.dreams.find(d => d.id === selectedDreamId) || member.dreams.find(d => d.status === 'active');
     
     // Passos reais vindos do banco
     const steps: DreamStep[] = activeDream?.steps || [];
@@ -37,7 +38,7 @@ const JourneyPath: React.FC<Props> = ({ member, onSelectDream, onBack }) => {
                 {steps.length === 0 ? (
                     <div className="flex flex-col items-center justify-center pt-32 text-slate-400 opacity-50 px-12 text-center gap-4">
                         <span className="material-symbols-outlined text-6xl">map</span>
-                        <p className="text-xs font-black uppercase tracking-widest">Seus pais ainda estão forjando o mapa da sua jornada!</p>
+                        <p className="text-xs font-black uppercase tracking-widest">Este mapa heróico ainda não tem missões definidas!</p>
                     </div>
                 ) : (
                     <div className="w-full relative h-full">
@@ -108,7 +109,7 @@ const JourneyPath: React.FC<Props> = ({ member, onSelectDream, onBack }) => {
                             );
                         })}
 
-                        {/* Baú de Recompensa Final - Posicionado abaixo do último nodo */}
+                        {/* Baú de Recompensa Final */}
                         {steps.length > 0 && (
                             <div 
                                 className="absolute flex flex-col items-center animate-float"
@@ -119,6 +120,7 @@ const JourneyPath: React.FC<Props> = ({ member, onSelectDream, onBack }) => {
                                 }}
                             >
                                 <button 
+                                    onClick={() => activeDream && onSelectDream(activeDream.id)}
                                     className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-[2.5rem] shadow-[0_10px_0_0_#d97706] flex items-center justify-center border-4 border-white/20 active:translate-y-1 active:shadow-none transition-all"
                                 >
                                     <span className="material-symbols-outlined text-white text-4xl fill-1 drop-shadow-lg">redeem</span>

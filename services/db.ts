@@ -1,9 +1,8 @@
-
 import { Dexie, type Table } from 'dexie';
 import { Member, StoreItem, LevelConfig, GlobalSettings, JourneyTemplate } from '../types';
 
-// Fix: Changed default import to named import { Dexie } to ensure that the class definition 
-// and its methods like .version() are correctly inherited and recognized by TypeScript on the subclass.
+// Use named import for Dexie to ensure that methods like .version() 
+// are correctly inherited and recognized by the TypeScript compiler on the subclass.
 export class DreamQuestDB extends Dexie {
   members!: Table<Member, string>;
   storeItems!: Table<StoreItem, string>;
