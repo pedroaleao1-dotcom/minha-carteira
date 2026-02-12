@@ -15,18 +15,35 @@ const CATEGORIES: { id: TaskCategory, icon: string, label: string, color: string
     { id: 'fitness', icon: 'sports_soccer', label: 'Esporte', color: 'bg-rose-500' }
 ];
 
+const SUGGESTIONS = [
+    { title: 'Arrumar a Cama 🛏️', reward: 10, category: 'chore' as TaskCategory, icon: 'bed' },
+    { title: 'Escovar os Dentes 🪥', reward: 5, category: 'health' as TaskCategory, icon: 'dentistry' },
+    { title: 'Ler 15 Minutos 📚', reward: 20, category: 'study' as TaskCategory, icon: 'menu_book' },
+    { title: 'Guardar Brinquedos 🧸', reward: 15, category: 'chore' as TaskCategory, icon: 'category' },
+    { title: 'Comer Frutas 🍎', reward: 10, category: 'health' as TaskCategory, icon: 'restaurant' },
+    { title: 'Fazer Lição ✍️', reward: 30, category: 'study' as TaskCategory, icon: 'edit_note' }
+];
+
 const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
     const [title, setTitle] = useState('');
     const [reward, setReward] = useState(20);
     const [frequency, setFrequency] = useState<TaskFrequency>('once');
     const [recurrenceText, setRecurrenceText] = useState('');
     const [category, setCategory] = useState<TaskCategory>('chore');
+    const [icon, setIcon] = useState('cleaning_services');
     const [assignedTo, setAssignedTo] = useState<string[]>([]);
 
     const toggleMember = (id: string) => {
         setAssignedTo(prev => 
             prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
         );
+    };
+
+    const applySuggestion = (s: typeof SUGGESTIONS[0]) => {
+        setTitle(s.title);
+        setReward(s.reward);
+        setCategory(s.category);
+        setIcon(s.icon);
     };
 
     const selectAll = () => {
@@ -47,6 +64,23 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
             </header>
 
             <main className="space-y-6 overflow-y-auto pb-12">
+                {/* Barra de Sugestões Rápidas */}
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Sugestões Rápidas ⚡</label>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {SUGGESTIONS.map((s, i) => (
+                            <button 
+                                key={i}
+                                onClick={() => applySuggestion(s)}
+                                className="shrink-0 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl text-[10px] font-black text-slate-600 hover:border-sky-300 hover:bg-sky-50 transition-all flex items-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">{s.icon}</span>
+                                {s.title}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Título da Missão</label>
                     <input 
@@ -64,7 +98,7 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
                         {CATEGORIES.map(cat => (
                             <button 
                                 key={cat.id}
-                                onClick={() => setCategory(cat.id)}
+                                onClick={() => { setCategory(cat.id); setIcon(cat.icon); }}
                                 className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${category === cat.id ? 'bg-slate-900 border-slate-900 text-white shadow-lg scale-[1.02]' : 'bg-white border-slate-100 text-slate-400'}`}
                             >
                                 <span className={`material-symbols-outlined ${category === cat.id ? 'text-white' : 'text-slate-300'}`}>{cat.icon}</span>
@@ -162,7 +196,7 @@ const AddTask: React.FC<Props> = ({ members, onAdd, onBack }) => {
                         title, 
                         reward, 
                         xp: reward * 2, 
-                        icon: CATEGORIES.find(c => c.id === category)?.icon || 'task', 
+                        icon: icon, 
                         frequency, 
                         category, 
                         assignedTo,

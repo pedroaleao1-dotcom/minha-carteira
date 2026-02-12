@@ -1,20 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# 🏰 DreamQuest Kids - Manual do Reino
 
-This contains everything you need to run your app locally.
+Este aplicativo transforma tarefas diárias em uma jornada épica. Siga as instruções abaixo para preparar o banco de dados.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1TnzedYcRhfqusS-td_C55o3jkd_oQNml
+## 🚀 Como Iniciar o Banco de Dados (Passo a Passo)
 
-## Run Locally
+Para que o aplicativo funcione corretamente, você deve configurar o banco de dados no Supabase:
 
-**Prerequisites:**  Node.js
+1.  Acesse seu projeto no [Supabase Dashboard](https://supabase.com).
+2.  No menu lateral esquerdo, clique em **SQL Editor**.
+3.  Clique em **New Query** (ou use uma aba em branco).
+4.  Abra o arquivo `SETUP_DATABASE.sql` deste projeto.
+5.  **COPIE TODO O CONTEÚDO** do arquivo e cole no editor do Supabase.
+6.  Clique no botão **Run** (ou pressione `Cmd+Enter` / `Ctrl+Enter`).
+7.  Verifique se a mensagem "Success. No rows returned" ou similar aparece.
 
+**Atenção:** Nunca tente rodar arquivos `.ts` ou `.tsx` no SQL Editor. Use apenas o conteúdo do arquivo `.sql`.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 📊 O que este script faz?
+- **Apaga tabelas antigas**: Garante que erros de tipos de dados anteriores sejam corrigidos.
+- **Cria o Schema**: Define as tabelas de Membros, Loja, Níveis e Mapas.
+- **Popula Heróis**: Cria heróis de exemplo (Arthur, Alice e Bob) para você já começar testando.
+- **Configura o Mentor**: Cria o acesso para os pais gerenciarem o reino.
+
+---
+*Que a jornada comece!*

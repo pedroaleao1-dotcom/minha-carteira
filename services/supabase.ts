@@ -30,7 +30,7 @@
  *     price INTEGER NOT NULL,
  *     icon TEXT,
  *     color TEXT,
- *     assigned_to TEXT[] DEFAULT '{}',
+ *     assigned_to JSONB DEFAULT '[]',
  *     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
  * );
  * 
