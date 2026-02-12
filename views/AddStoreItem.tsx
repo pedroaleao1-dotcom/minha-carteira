@@ -151,7 +151,8 @@ const AddStoreItem: React.FC<Props> = ({ members, onAdd, onBack }) => {
 
                 <button 
                     disabled={!isFormValid}
-                    onClick={() => onAdd({ title, price, icon, color, assignedTo })}
+                    // Fix: Added updatedAt to comply with StoreItem interface requirements
+                    onClick={() => onAdd({ title, price, icon, color, assignedTo, updatedAt: Date.now() })}
                     className="w-full bg-purple-500 text-white py-6 rounded-[2.5rem] font-black text-xl shadow-[0_8px_0_0_#7e22ce] active-press disabled:opacity-50 disabled:grayscale transition-all mt-4 flex items-center justify-center gap-3"
                 >
                     <span className="material-symbols-outlined text-2xl">redeem</span>

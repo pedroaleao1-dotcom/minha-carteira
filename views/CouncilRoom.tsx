@@ -20,7 +20,11 @@ const FORGE_ICONS = [
 ];
 
 const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
-    const [settings, setSettings] = useState<GlobalSettings>({ allow_coin_creation: true });
+    // Fix: Added updatedAt to initial state
+    const [settings, setSettings] = useState<GlobalSettings>({ 
+        allow_coin_creation: true,
+        updatedAt: Date.now()
+    });
     const [levels, setLevels] = useState<LevelConfig[]>([]);
     
     // Estados da Forja de Riqueza
@@ -33,12 +37,14 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
     
     // UI State para Novo Nível
     const [isAddingLevel, setIsAddingLevel] = useState(false);
+    // Fix: Added updatedAt to initial state
     const [newLevel, setNewLevel] = useState<LevelConfig>({
         level_number: 1,
         title: '',
         xp_required: 0,
         coins_required: 0,
-        shield_icon: 'shield'
+        shield_icon: 'shield',
+        updatedAt: Date.now()
     });
 
     useEffect(() => {
@@ -47,7 +53,11 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
     }, []);
 
     const toggleCoinCreation = async () => {
-        const newSettings = { allow_coin_creation: !settings.allow_coin_creation };
+        // Fix: Added updatedAt to the new settings object
+        const newSettings = { 
+            allow_coin_creation: !settings.allow_coin_creation,
+            updatedAt: Date.now()
+        };
         setSettings(newSettings);
         await updateGlobalSettings(newSettings);
     };
@@ -61,6 +71,7 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
             const member = members.find(m => m.id === id);
             if (!member) return;
 
+            // Fix: Added missing updatedAt to the bonus transaction item
             const updatedMember = {
                 ...member,
                 coins: member.coins + forgeCoins,
@@ -71,7 +82,8 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
                     title: forgeTitle,
                     amount: forgeCoins,
                     icon: forgeIcon,
-                    timestamp: now
+                    timestamp: now,
+                    updatedAt: now
                 }, ...member.history]
             };
             return upsertMember(updatedMember);
@@ -106,12 +118,14 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
 
     const prepareNewLevel = () => {
         const nextLevelNumber = levels.length > 0 ? Math.max(...levels.map(l => l.level_number)) + 1 : 1;
+        // Fix: Added missing updatedAt to the new level config
         setNewLevel({
             level_number: nextLevelNumber,
             title: `Nível ${nextLevelNumber}`,
             xp_required: nextLevelNumber * 500,
             coins_required: nextLevelNumber * 100,
-            shield_icon: 'military_tech'
+            shield_icon: 'military_tech',
+            updatedAt: Date.now()
         });
         setIsAddingLevel(true);
     };

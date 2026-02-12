@@ -11,8 +11,8 @@ interface Props {
 const PRESET_AVATARS = [
     'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
     'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Buddy&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Willow&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/buddy/svg?seed=Buddy&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/willow/svg?seed=Willow&backgroundColor=ffd5dc',
     'https://api.dicebear.com/7.x/bottts/svg?seed=Sparky&backgroundColor=d1d4f9',
     'https://api.dicebear.com/7.x/bottts/svg?seed=Robo&backgroundColor=b6e3f4',
 ];
@@ -25,11 +25,14 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
     const handleSave = () => {
         if (!name.trim()) return;
         
+        // Fix: Added updatedAt and taskCompletions to satisfy Member interface requirements
         onSave({
             name,
             role,
             avatar,
-            badge: role === 'child' ? 'star' : 'settings'
+            badge: role === 'child' ? 'star' : 'settings',
+            updatedAt: Date.now(),
+            taskCompletions: []
         });
     };
 

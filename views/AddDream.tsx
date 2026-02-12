@@ -83,12 +83,14 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
 
     const handleAdd = () => {
         if (!title) return;
+        // Fix: Added updatedAt to comply with Dream interface requirements
         onAdd({
             title,
             targetAmount,
             icon,
             imageUrl: photo || `https://picsum.photos/seed/${title}/400/300`,
-            status: 'active'
+            status: 'active',
+            updatedAt: Date.now()
         });
     };
 
