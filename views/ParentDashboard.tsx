@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Member, Task } from '../types';
-import ActivityCalendar from '../components/ActivityCalendar';
 
 interface Props {
     activeParent: Member;
@@ -18,7 +17,6 @@ interface Props {
 
 const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports }) => {
     const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending'));
-    const children = members.filter(m => m.role === 'child');
 
     return (
         <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen">
@@ -57,22 +55,6 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                         <span className="text-[10px] uppercase tracking-widest text-center">Relatórios</span>
                     </button>
                 </div>
-
-                {/* Resumo de Atividades das Crianças */}
-                <section className="space-y-4">
-                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Monitor Rápido</h2>
-                    <div className="space-y-4">
-                        {children.map(child => (
-                            <div key={child.id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <img src={child.avatar} className="w-8 h-8 rounded-full border border-slate-100" />
-                                    <h3 className="font-black text-slate-800 text-sm">{child.name}</h3>
-                                </div>
-                                <ActivityCalendar completions={child.taskCompletions || []} />
-                            </div>
-                        ))}
-                    </div>
-                </section>
 
                 <div className="grid grid-cols-1 gap-4">
                     <button 

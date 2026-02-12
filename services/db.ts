@@ -1,5 +1,5 @@
 
-import { Dexie, type Table } from 'dexie';
+import Dexie, { type Table } from 'dexie';
 import { Member, StoreItem, LevelConfig, GlobalSettings } from '../types';
 
 // Defining the database class extending Dexie
@@ -14,7 +14,8 @@ export class DreamQuestDB extends Dexie {
     super('DreamQuestDB');
     
     // Explicitly define the schema versions
-    // Fix: Use named import { Dexie } to ensure 'version' and other instance methods are correctly typed
+    // Define the database schema using this.version(). 
+    // Using the default import for Dexie ensures instance methods are correctly recognized in TypeScript.
     this.version(2).stores({
       members: 'id, name, role, updatedAt',
       storeItems: 'id, title, updatedAt',
