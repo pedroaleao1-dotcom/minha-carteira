@@ -1,7 +1,8 @@
-import { Dexie, type Table } from 'dexie';
+
+import Dexie, { type Table } from 'dexie';
 import { Member, StoreItem, LevelConfig, GlobalSettings, JourneyTemplate } from '../types';
 
-// Use named import for Dexie to ensure that methods like .version() 
+// Use default import for Dexie to ensure that methods like .version() 
 // are correctly inherited and recognized by the TypeScript compiler on the subclass.
 export class DreamQuestDB extends Dexie {
   members!: Table<Member, string>;
@@ -13,6 +14,8 @@ export class DreamQuestDB extends Dexie {
   constructor() {
     super('DreamQuestDB');
     
+    // The version() method is inherited from the Dexie base class and is used to define the schema.
+    // Using a default import for Dexie typically resolves inheritance-related type errors in TypeScript.
     this.version(3).stores({
       members: 'id, name, role, updatedAt',
       storeItems: 'id, title, updatedAt',
