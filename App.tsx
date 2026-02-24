@@ -16,6 +16,7 @@ import DreamGallery from './views/DreamGallery';
 import AddDream from './views/AddDream';
 import AddStoreItem from './views/AddStoreItem';
 import Wallet from './views/Wallet';
+import XPView from './views/XPView';
 import AddMember from './views/AddMember';
 import CouncilRoom from './views/CouncilRoom';
 import JourneyPath from './views/JourneyPath';
@@ -28,7 +29,7 @@ import RequestMission from './views/RequestMission';
 
 // Serviços
 import { db } from './services/db';
-import { supabase, pushToCloud, pullFromCloud, pushStoreItem, upsertMember, pushJourneyTemplate, fetchJourneyTemplates } from './services/supabase';
+import { supabase, pushToCloud, pushMembersToCloud, pullFromCloud, pushStoreItem, pushStoreItemsToCloud, upsertMember, pushJourneyTemplate, fetchJourneyTemplates } from './services/supabase';
 import { generateDreamSteps } from './services/gemini';
 
 type View = 
@@ -45,6 +46,7 @@ type View =
     | 'profile' 
     | 'add_store_item' 
     | 'wallet' 
+    | 'xp'
     | 'add_member' 
     | 'edit_member'
     | 'manage_members'
@@ -89,9 +91,10 @@ const App: React.FC = () => {
         try {
             await pullFromCloud();
             const localMembers = await db.members.toArray();
-            for (const m of localMembers) { await pushToCloud(m); }
+            await pushMembersToCloud(localMembers);
             const localStore = await db.storeItems.toArray();
-            for (const item of localStore) { await pushStoreItem(item); }
+            await pushStoreItemsToCloud(localStore);
+            
             const updatedMembers = await db.members.toArray();
             setMembers(updatedMembers);
             const updatedStore = await db.storeItems.toArray();
@@ -116,13 +119,27 @@ const App: React.FC = () => {
         init();
     }, []);
 
+    // Debounced Sync for individual updates
+    const [syncTimeout, setSyncTimeout] = useState<NodeJS.Timeout | null>(null);
+
     const updateMemberById = async (id: string, updater: (m: Member) => Member) => {
         const currentMember = members.find(m => m.id === id);
         if (!currentMember) return;
+        
         const updated = { ...updater(currentMember), updatedAt: Date.now() };
+        
+        // Update local state and DB immediately (Optimistic)
         await db.members.put(updated);
         setMembers(prev => prev.map(m => m.id === id ? updated : m));
-        if (navigator.onLine) pushToCloud(updated);
+        
+        // Debounce cloud sync
+        if (navigator.onLine) {
+            if (syncTimeout) clearTimeout(syncTimeout);
+            const timeout = setTimeout(() => {
+                pushToCloud(updated);
+            }, 2000); // Wait 2 seconds of inactivity before pushing
+            setSyncTimeout(timeout);
+        }
     };
 
     const deleteMember = async (id: string) => {
@@ -218,6 +235,7 @@ const App: React.FC = () => {
                     case 'store': return <Store coins={activeMember.coins} storeItems={storeItems.filter(si => si.assignedTo.includes(activeMember.id))} redemptions={activeMember.redemptions} onBuy={(item) => updateMemberById(activeMember.id, m => ({...m, coins: m.coins - item.price, redemptions: [...m.redemptions, {id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'pending', timestamp: Date.now(), updatedAt: Date.now()}]}))} onBack={() => setView('child_dash')} />;
                     case 'profile': return <Profile child={activeMember} storeItems={storeItems} onNavigate={setView} onBack={() => setView(activeMember.role === 'parent' ? 'parent_dash' : 'child_dash')} onUpdateAvatar={(img) => updateMemberById(activeMember.id, m => ({...m, avatar: img}))} onBuyItem={(item) => activeMember.coins >= item.price && updateMemberById(activeMember.id, m => ({...m, coins: m.coins - item.price, redemptions: [...m.redemptions, {id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'delivered', timestamp: Date.now(), updatedAt: Date.now()}]}))} onSellItem={() => {}} />;
                     case 'wallet': return <Wallet child={activeMember} onBack={() => setView('child_dash')} />;
+                    case 'xp': return <XPView child={activeMember} onBack={() => setView('child_dash')} />;
                     case 'achievements': return <Achievements achievements={activeMember.achievements} onBack={() => setView('child_dash')} />;
                     case 'add_task': return <AddTask members={members} onAdd={async (t) => { t.assignedTo.forEach(id => updateMemberById(id, m => ({...m, tasks: [...m.tasks, {...t, id: Math.random().toString(36).substr(2, 9), status: 'todo', updatedAt: Date.now()}] as any}))); setView('parent_dash'); }} onBack={() => setView('parent_dash')} />;
                     case 'add_dream': return <AddDream onAdd={(dream) => { updateMemberById(activeMember.id, m => ({ ...m, dreams: [...m.dreams, { ...dream, id: Math.random().toString(36).substr(2, 9), currentAmount: 0 } as any] })); setView('dream_gallery'); }} onBack={() => setView('dream_gallery')} />;

@@ -10,30 +10,20 @@ interface Props {
 }
 
 const Reports: React.FC<Props> = ({ members, onBack }) => {
-    const [selectedChildId, setSelectedChildId] = useState<string>(members[0]?.id || '');
-    const [selectedDay, setSelectedDay] = useState<number | null>(null);
-    const [dayCompletions, setDayCompletions] = useState<TaskCompletion[]>([]);
-    const [aiInsight, setAiInsight] = useState<string>("Invocando a sabedoria do Mestre...");
-
-    const selectedChild = members.find(m => m.id === selectedChildId);
+    const [aiInsights, setAiInsights] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        if (selectedChild) {
-            const lastTasks = selectedChild.taskCompletions.slice(-5).map(c => c.taskTitle).join(', ');
-            const context = `Análise de desempenho do herói ${selectedChild.name}. Nível: ${selectedChild.level}. Últimas missões: ${lastTasks}. Dê um conselho motivador e pedagógico para os pais.`;
-            getMasterTip(context).then(setAiInsight);
-        }
-    }, [selectedChildId]);
+        members.forEach(child => {
+            // Only fetch if we don't have an insight for this child yet
+            if (aiInsights[child.id]) return;
 
-    const handleSelectDay = (day: number, completions: TaskCompletion[]) => {
-        setSelectedDay(day === selectedDay ? null : day);
-        setDayCompletions(completions);
-    };
-
-    if (!selectedChild) return null;
-
-    const totalCoins = selectedChild.taskCompletions.reduce((acc, c) => acc + c.rewardCoins, 0);
-    const avgPerDay = (selectedChild.taskCompletions.length / 30).toFixed(1);
+            const lastTasks = child.taskCompletions.slice(-5).map(c => c.taskTitle).join(', ');
+            const context = `Análise de desempenho do herói ${child.name}. Nível: ${child.level}. Últimas missões: ${lastTasks}. Dê um conselho motivador e pedagógico para os pais.`;
+            getMasterTip(context).then(tip => {
+                setAiInsights(prev => ({ ...prev, [child.id]: tip }));
+            });
+        });
+    }, [members, aiInsights]);
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50 min-h-screen">
@@ -42,94 +32,99 @@ const Reports: React.FC<Props> = ({ members, onBack }) => {
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
                 <div className="text-center">
-                    <h1 className="text-lg font-black uppercase tracking-widest text-emerald-600">Relatórios</h1>
+                    <h1 className="text-lg font-black uppercase tracking-widest text-emerald-600">Monitor de Desempenho</h1>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Visão de Mentor</p>
                 </div>
                 <div className="w-12 h-12"></div>
             </header>
 
-            <main className="p-6 space-y-8 flex-1 overflow-y-auto pb-32">
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                    {members.map(m => (
-                        <button
-                            key={m.id}
-                            onClick={() => { setSelectedChildId(m.id); setSelectedDay(null); }}
-                            className={`flex flex-col items-center gap-3 shrink-0 transition-all ${selectedChildId === m.id ? 'scale-110' : 'opacity-30 grayscale'}`}
-                        >
-                            <div className={`relative w-16 h-16 rounded-full border-4 p-0.5 ${selectedChildId === m.id ? 'border-emerald-500 shadow-xl' : 'border-white'}`}>
-                                <img src={m.avatar} className="w-full h-full object-cover rounded-full" />
+            <main className="p-6 space-y-12 flex-1 overflow-y-auto pb-32">
+                {members.map(child => {
+                    const totalCoins = child.taskCompletions.reduce((acc, c) => acc + c.rewardCoins, 0);
+                    const avgPerDay = (child.taskCompletions.length / 30).toFixed(1);
+                    const activeDreams = child.dreams.filter(d => d.status === 'active');
+
+                    return (
+                        <div key={child.id} className="space-y-6 border-b border-slate-200 pb-12 last:border-0">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-16 h-16 rounded-full border-4 border-emerald-500 shadow-xl overflow-hidden">
+                                    <img src={child.avatar} className="w-full h-full object-cover" alt={child.name} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-800 uppercase">{child.name}</h2>
+                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Nível {child.level} • Herói Ativo</p>
+                                </div>
                             </div>
-                            <span className={`text-[10px] font-black uppercase ${selectedChildId === m.id ? 'text-emerald-600' : 'text-slate-400'}`}>{m.name}</span>
-                        </button>
-                    ))}
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3">
-                        <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500"><span className="material-symbols-outlined fill-1">monetization_on</span></div>
-                        <div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Total Ganho</p>
-                            <p className="text-xl font-black text-slate-800">{totalCoins}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><span className="material-symbols-outlined">bolt</span></div>
-                        <div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Média Diária</p>
-                            <p className="text-xl font-black text-slate-800">{avgPerDay}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Novo: Progresso de Jornadas */}
-                <section className="space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Jornadas em Curso</h3>
-                    <div className="space-y-3">
-                        {selectedChild.dreams.filter(d => d.status === 'active').map(dream => {
-                            const completedSteps = dream.steps?.filter(s => s.isCompleted).length || 0;
-                            const totalSteps = dream.steps?.length || 1;
-                            const percent = Math.round((completedSteps / totalSteps) * 100);
-                            
-                            return (
-                                <div key={dream.id} className="bg-white rounded-[1.8rem] p-4 border border-slate-100 shadow-sm">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-sky-500 text-sm">{dream.icon}</span>
-                                            <span className="text-[10px] font-black text-slate-700 uppercase">{dream.title}</span>
-                                        </div>
-                                        <span className="text-[9px] font-black text-sky-600">{percent}%</span>
-                                    </div>
-                                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-sky-500 transition-all duration-1000" style={{ width: `${percent}%` }}></div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3">
+                                    <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500"><span className="material-symbols-outlined fill-1">monetization_on</span></div>
+                                    <div>
+                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Total Ganho</p>
+                                        <p className="text-xl font-black text-slate-800">{totalCoins}</p>
                                     </div>
                                 </div>
-                            );
-                        })}
-                        {selectedChild.dreams.filter(d => d.status === 'active').length === 0 && (
-                            <p className="text-center py-4 text-[9px] text-slate-300 font-bold uppercase">Sem jornadas ativas</p>
-                        )}
-                    </div>
-                </section>
+                                <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3">
+                                    <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><span className="material-symbols-outlined">bolt</span></div>
+                                    <div>
+                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Média Diária</p>
+                                        <p className="text-xl font-black text-slate-800">{avgPerDay}</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                <section className="bg-emerald-600 rounded-[2.5rem] p-6 text-white relative overflow-hidden shadow-2xl">
-                    <div className="flex gap-4 items-start relative z-10">
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shrink-0 border border-white/20">
-                            <span className="material-symbols-outlined text-white">auto_awesome</span>
-                        </div>
-                        <div>
-                            <h3 className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-emerald-100">Visão do Mestre</h3>
-                            <p className="text-xs font-bold leading-relaxed italic text-white/90">"{aiInsight}"</p>
-                        </div>
-                    </div>
-                </section>
+                            <section className="space-y-4">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Jornadas em Curso</h3>
+                                <div className="space-y-3">
+                                    {activeDreams.map(dream => {
+                                        const completedSteps = dream.steps?.filter(s => s.isCompleted).length || 0;
+                                        const totalSteps = dream.steps?.length || 1;
+                                        const percent = Math.round((completedSteps / totalSteps) * 100);
+                                        
+                                        return (
+                                            <div key={dream.id} className="bg-white rounded-[1.8rem] p-4 border border-slate-100 shadow-sm">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="material-symbols-outlined text-sky-500 text-sm">{dream.icon}</span>
+                                                        <span className="text-[10px] font-black text-slate-700 uppercase">{dream.title}</span>
+                                                    </div>
+                                                    <span className="text-[9px] font-black text-sky-600">{percent}%</span>
+                                                </div>
+                                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-sky-500 transition-all duration-1000" style={{ width: `${percent}%` }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {activeDreams.length === 0 && (
+                                        <p className="text-center py-4 text-[9px] text-slate-300 font-bold uppercase">Sem jornadas ativas</p>
+                                    )}
+                                </div>
+                            </section>
 
-                <section className="space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mapa de Atividade</h3>
-                    <ActivityCalendar completions={selectedChild.taskCompletions} onSelectDay={handleSelectDay} selectedDay={selectedDay} />
-                </section>
+                            <section className="bg-emerald-600 rounded-[2.5rem] p-6 text-white relative overflow-hidden shadow-2xl">
+                                <div className="flex gap-4 items-start relative z-10">
+                                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shrink-0 border border-white/20">
+                                        <span className="material-symbols-outlined text-white">auto_awesome</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-emerald-100">Visão do Mestre</h3>
+                                        <p className="text-xs font-bold leading-relaxed italic text-white/90">"{aiInsights[child.id] || 'Invocando sabedoria...'}"</p>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="space-y-4">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mapa de Atividade</h3>
+                                <ActivityCalendar completions={child.taskCompletions} />
+                            </section>
+                        </div>
+                    );
+                })}
             </main>
         </div>
     );
 };
+
 
 export default Reports;

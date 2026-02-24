@@ -2,7 +2,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Master tip generation for children - Basic task using flash model
+// Added caching to avoid redundant slow API calls
+const tipCache: Record<string, { tip: string, timestamp: number }> = {};
+const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
 export const getMasterTip = async (context: string) => {
+    const cacheKey = context.trim().toLowerCase();
+    const cached = tipCache[cacheKey];
+    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+        return cached.tip;
+    }
+
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
@@ -11,8 +21,12 @@ export const getMasterTip = async (context: string) => {
             Gere uma dica curta, motivadora e divertida (em português) para uma criança sobre: ${context}. 
             Máximo 20 palavras.`,
         });
-        // Accessing .text property directly as per guidelines
-        return response.text || "Continue brilhando, pequeno explorador!";
+        const tip = response.text || "Continue brilhando, pequeno explorador!";
+        
+        // Save to cache
+        tipCache[cacheKey] = { tip, timestamp: Date.now() };
+        
+        return tip;
     } catch (error) {
         console.error("Gemini Error:", error);
         return "Cada tarefa concluída te deixa mais perto do seu sonho!";

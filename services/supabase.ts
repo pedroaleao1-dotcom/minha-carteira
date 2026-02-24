@@ -112,50 +112,76 @@ export const pushToCloud = async (member: Member) => {
     }
 };
 
+export const pushMembersToCloud = async (members: Member[]) => {
+    if (members.length === 0) return true;
+    try {
+        const payload = members.map(member => ({
+            id: member.id,
+            name: member.name,
+            avatar: member.avatar,
+            role: member.role,
+            badge: member.badge,
+            level: member.level,
+            xp: member.xp,
+            coins: member.coins,
+            dreams: member.dreams,
+            tasks: member.tasks,
+            task_completions: member.taskCompletions,
+            achievements: member.achievements,
+            redemptions: member.redemptions,
+            history: member.history,
+            notifications: member.notifications,
+            updated_at: new Date(member.updatedAt).toISOString()
+        }));
+        const { error } = await supabase.from('members').upsert(payload);
+        if (error) throw error;
+        return true;
+    } catch (e) {
+        console.error("Erro ao subir membros em lote:", e);
+        return false;
+    }
+};
+
 export const pullFromCloud = async () => {
     try {
         const { data: cloudMembers, error: mError } = await supabase.from('members').select('*');
         if (mError) throw mError;
         
         if (cloudMembers) {
-            for (const cm of cloudMembers) {
-                const member: Member = {
-                    id: cm.id,
-                    name: cm.name,
-                    avatar: cm.avatar,
-                    role: cm.role as any,
-                    badge: cm.badge,
-                    level: cm.level,
-                    xp: cm.xp,
-                    coins: cm.coins,
-                    dreams: cm.dreams || [],
-                    tasks: cm.tasks || [],
-                    taskCompletions: cm.task_completions || [],
-                    achievements: cm.achievements || [],
-                    redemptions: cm.redemptions || [],
-                    history: cm.history || [],
-                    notifications: cm.notifications,
-                    updatedAt: new Date(cm.updated_at).getTime()
-                };
-                await db.members.put(member);
-            }
+            const membersToPut = cloudMembers.map(cm => ({
+                id: cm.id,
+                name: cm.name,
+                avatar: cm.avatar,
+                role: cm.role as any,
+                badge: cm.badge,
+                level: cm.level,
+                xp: cm.xp,
+                coins: cm.coins,
+                dreams: cm.dreams || [],
+                tasks: cm.tasks || [],
+                taskCompletions: cm.task_completions || [],
+                achievements: cm.achievements || [],
+                redemptions: cm.redemptions || [],
+                history: cm.history || [],
+                notifications: cm.notifications,
+                updatedAt: new Date(cm.updated_at).getTime()
+            }));
+            await db.members.bulkPut(membersToPut);
         }
 
         const { data: cloudStore, error: sError } = await supabase.from('store_items').select('*');
         if (sError) throw sError;
         if (cloudStore) {
-            for (const cs of cloudStore) {
-                const item: StoreItem = {
-                    id: cs.id,
-                    title: cs.title,
-                    price: cs.price,
-                    icon: cs.icon,
-                    color: cs.color,
-                    assignedTo: cs.assigned_to || [],
-                    updatedAt: new Date(cs.updated_at).getTime()
-                };
-                await db.storeItems.put(item);
-            }
+            const itemsToPut = cloudStore.map(cs => ({
+                id: cs.id,
+                title: cs.title,
+                price: cs.price,
+                icon: cs.icon,
+                color: cs.color,
+                assignedTo: cs.assigned_to || [],
+                updatedAt: new Date(cs.updated_at).getTime()
+            }));
+            await db.storeItems.bulkPut(itemsToPut);
         }
     } catch (e) {
         console.error("Erro ao baixar dados:", e);
@@ -174,6 +200,20 @@ export const pushStoreItem = async (item: StoreItem) => {
         assigned_to: item.assignedTo,
         updated_at: new Date(item.updatedAt).toISOString()
     });
+};
+
+export const pushStoreItemsToCloud = async (items: StoreItem[]) => {
+    if (items.length === 0) return true;
+    const payload = items.map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        icon: item.icon,
+        color: item.color,
+        assigned_to: item.assignedTo,
+        updated_at: new Date(item.updatedAt).toISOString()
+    }));
+    await supabase.from('store_items').upsert(payload);
 };
 
 // --- CONFIGURAÇÕES GLOBAIS ---

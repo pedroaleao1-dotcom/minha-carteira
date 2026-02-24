@@ -8,7 +8,7 @@ interface Props {
     selectedDay?: number | null;
 }
 
-const ActivityCalendar: React.FC<Props> = ({ completions, onSelectDay, selectedDay }) => {
+const ActivityCalendar: React.FC<Props> = React.memo(({ completions, onSelectDay, selectedDay }) => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
@@ -77,6 +77,6 @@ const ActivityCalendar: React.FC<Props> = ({ completions, onSelectDay, selectedD
             </div>
         </div>
     );
-};
+});
 
 export default ActivityCalendar;

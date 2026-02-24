@@ -101,32 +101,50 @@ const RoleSelection: React.FC<Props> = ({ members, onSelect, onAddNew, isLoading
 
             {/* PIN Input Overlay */}
             {showPinOverlay && (
-                <div className="absolute bottom-10 left-0 right-0 px-6 flex flex-col items-center z-50 animate-pop-in">
-                    <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-[3rem] p-10 shadow-2xl border-2 border-white flex flex-col items-center">
-                        <span className="material-symbols-outlined text-slate-400 mb-4">lock</span>
-                        <p className="text-slate-500 font-bold text-xs text-center mb-6 px-4">Digite o PIN do Mentor</p>
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end animate-pop-in">
+                    <div className="w-full bg-white rounded-t-[3rem] p-10 shadow-2xl flex flex-col items-center animate-slide-up">
+                        <div className="w-12 h-1.5 bg-slate-200 rounded-full mb-8 opacity-50" />
                         
-                        <div className="flex gap-4 mb-10">
+                        <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mb-6">
+                            <span className="material-symbols-outlined text-pink-500 text-3xl fill-1">family_restroom</span>
+                        </div>
+                        
+                        <h2 className="text-2xl font-black text-slate-800 mb-2">Acesso dos Pais</h2>
+                        <p className="text-slate-400 font-bold text-xs text-center mb-10 px-8 leading-relaxed">
+                            Digite seu PIN de 4 dígitos para gerenciar perfis e configurações.
+                        </p>
+                        
+                        <div className="flex gap-4 mb-12">
                             {[0,1,2,3].map(i => (
                                 <div 
                                     key={i} 
-                                    className={`w-4 h-4 rounded-full border-2 border-slate-200 transition-all ${pin.length > i ? 'bg-[#2b8cee] border-[#2b8cee] scale-125' : 'bg-white'}`}
-                                />
+                                    className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${
+                                        pin.length > i 
+                                        ? 'bg-pink-500 border-pink-500 scale-110 shadow-lg shadow-pink-200' 
+                                        : 'bg-white border-slate-100'
+                                    }`}
+                                >
+                                    {pin.length > i && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                                </div>
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 w-full">
+                        <div className="grid grid-cols-3 gap-x-6 gap-y-4 w-full max-w-xs mb-10">
                             {[1,2,3,4,5,6,7,8,9].map(n => (
-                                <button key={n} onClick={() => handlePinDigit(n.toString())} className="h-12 bg-white rounded-xl font-black text-slate-700 shadow-sm active:scale-90 transition-all border border-slate-100">{n}</button>
+                                <button key={n} onClick={() => handlePinDigit(n.toString())} className="h-16 bg-slate-50 rounded-full font-black text-slate-700 text-xl active:scale-90 transition-all hover:bg-slate-100">{n}</button>
                             ))}
-                            <div />
-                            <button onClick={() => handlePinDigit("0")} className="h-12 bg-white rounded-xl font-black text-slate-700 shadow-sm active:scale-90 transition-all border border-slate-100">0</button>
-                            <button onClick={() => setPin(prev => prev.slice(0, -1))} className="h-12 bg-slate-100 rounded-xl font-black text-slate-400 active:scale-90 transition-all flex items-center justify-center">
+                            <button onClick={() => setPin([])} className="h-16 flex items-center justify-center text-slate-300 active:scale-90 transition-all">
+                                <span className="material-symbols-outlined">arrow_back</span>
+                            </button>
+                            <button onClick={() => handlePinDigit("0")} className="h-16 bg-slate-50 rounded-full font-black text-slate-700 text-xl active:scale-90 transition-all hover:bg-slate-100">0</button>
+                            <button onClick={() => setPin(prev => prev.slice(0, -1))} className="h-16 flex items-center justify-center text-slate-300 active:scale-90 transition-all">
                                 <span className="material-symbols-outlined">backspace</span>
                             </button>
                         </div>
                         
-                        <button onClick={() => setShowPinOverlay(null)} className="mt-6 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Cancelar</button>
+                        <button onClick={() => setShowPinOverlay(null)} className="w-full bg-slate-100 text-slate-500 py-5 rounded-3xl font-black text-sm uppercase tracking-widest active:scale-95 transition-all">
+                            Cancelar
+                        </button>
                     </div>
                 </div>
             )}

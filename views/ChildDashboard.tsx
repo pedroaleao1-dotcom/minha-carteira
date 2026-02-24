@@ -47,15 +47,15 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLog
                         </div>
                     </button>
                     
-                    <div className="bg-white rounded-[2rem] p-5 shadow-xl flex items-center gap-3 border border-slate-50">
-                        <div className="w-10 h-10 bg-sky-100 rounded-2xl flex items-center justify-center">
+                    <button onClick={() => onNavigate('xp')} className="bg-white rounded-[2rem] p-5 shadow-xl flex items-center gap-3 border border-slate-50 active:scale-95 transition-all group">
+                        <div className="w-10 h-10 bg-sky-100 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
                             <span className="material-symbols-outlined text-sky-500">bolt</span>
                         </div>
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase">XP</p>
                             <span className="text-xl font-black text-slate-800">{child.xp}</span>
                         </div>
-                    </div>
+                    </button>
                 </div>
             </header>
 
