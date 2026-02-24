@@ -51,55 +51,50 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
                 <div className="flex gap-4">
                     <button 
                         onClick={() => setRole('child')}
-                        className={`flex-1 p-6 rounded-[2rem] border-4 transition-all flex flex-col items-center gap-2 ${role === 'child' ? 'bg-[#2b8cee] border-white text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 grayscale'}`}
+                        className={`flex-1 p-6 rounded-[2.5rem] border-4 transition-all flex flex-col items-center gap-2 ${role === 'child' ? 'bg-pink-500 border-white text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 grayscale'}`}
                     >
-                        <span className="material-symbols-outlined text-4xl fill-1">rocket_launch</span>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${role === 'child' ? 'bg-white/20' : 'bg-slate-50'}`}>
+                            <span className="material-symbols-outlined text-3xl fill-1">rocket_launch</span>
+                        </div>
                         <span className="font-black uppercase tracking-widest text-[10px]">Herói</span>
                     </button>
                     <button 
                         onClick={() => setRole('parent')}
-                        className={`flex-1 p-6 rounded-[2rem] border-4 transition-all flex flex-col items-center gap-2 ${role === 'parent' ? 'bg-slate-800 border-white text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 grayscale'}`}
+                        className={`flex-1 p-6 rounded-[2.5rem] border-4 transition-all flex flex-col items-center gap-2 ${role === 'parent' ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 grayscale'}`}
                     >
-                        <span className="material-symbols-outlined text-4xl fill-1">settings</span>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${role === 'parent' ? 'bg-white/20' : 'bg-slate-50'}`}>
+                            <span className="material-symbols-outlined text-3xl fill-1">shield</span>
+                        </div>
                         <span className="font-black uppercase tracking-widest text-[10px]">Mentor</span>
                     </button>
                 </div>
 
                 {/* Nome */}
-                <div className="space-y-2 bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Qual o nome?</label>
+                <div className="space-y-3 bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Qual o nome do herói?</label>
                     <input 
                         type="text" 
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Ex: Pedro, Maria, Papai..."
+                        placeholder="Ex: Davi, Bia, Papai..."
                         autoFocus
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-black text-slate-800 outline-none focus:border-[#2b8cee] transition-colors"
+                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-5 font-black text-slate-800 outline-none focus:border-pink-500 transition-colors text-lg"
                     />
                 </div>
 
                 {/* Avatares */}
-                <div className="space-y-4">
+                <div className="space-y-4 bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Escolha o Visual</label>
-                    <div className="grid grid-cols-3 gap-4 px-2">
+                    <div className="grid grid-cols-3 gap-4">
                         {PRESET_AVATARS.map((url, i) => (
                             <button 
                                 key={i}
                                 onClick={() => setAvatar(url)}
-                                className={`aspect-square rounded-[1.5rem] overflow-hidden border-4 transition-all ${avatar === url ? 'border-[#2b8cee] scale-110 shadow-lg' : 'border-white opacity-40 hover:opacity-100'}`}
+                                className={`aspect-square rounded-full overflow-hidden border-4 transition-all ${avatar === url ? 'border-pink-500 scale-110 shadow-lg' : 'border-slate-50 opacity-40 hover:opacity-100'}`}
                             >
                                 <img src={url} className="w-full h-full object-cover" alt="" />
                             </button>
                         ))}
-                        {/* Se for edição e tiver avatar customizado, mostrar ele também */}
-                        {memberToEdit && !PRESET_AVATARS.includes(memberToEdit.avatar) && (
-                            <button 
-                                onClick={() => setAvatar(memberToEdit.avatar)}
-                                className={`aspect-square rounded-[1.5rem] overflow-hidden border-4 transition-all ${avatar === memberToEdit.avatar ? 'border-[#2b8cee] scale-110 shadow-lg' : 'border-white'}`}
-                            >
-                                <img src={memberToEdit.avatar} className="w-full h-full object-cover" alt="" />
-                            </button>
-                        )}
                     </div>
                 </div>
 
@@ -108,7 +103,7 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
                     onClick={handleSave}
                     className="w-full bg-emerald-500 text-white py-6 rounded-[2.5rem] font-black text-xl shadow-[0_8px_0_0_#059669] active-press disabled:opacity-50 disabled:grayscale transition-all mt-4 flex items-center justify-center gap-3"
                 >
-                    <span className="material-symbols-outlined text-2xl">{memberToEdit ? 'save' : 'check_circle'}</span>
+                    <span className="material-symbols-outlined text-2xl font-black">{memberToEdit ? 'save' : 'check_circle'}</span>
                     {memberToEdit ? 'SALVAR ALTERAÇÕES' : 'ENTRAR NA AVENTURA!'}
                 </button>
             </main>
