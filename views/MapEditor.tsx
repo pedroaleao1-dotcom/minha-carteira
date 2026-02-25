@@ -17,8 +17,11 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
     const [steps, setSteps] = useState<DreamStep[]>(template?.steps || dream?.steps || []);
     const [title, setTitle] = useState(template?.title || dream?.title || '');
+    const [theme, setTheme] = useState('');
     const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+    const [draggedStepId, setDraggedStepId] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [showAIPanel, setShowAIPanel] = useState(false);
     const canvasRef = useRef<HTMLDivElement>(null);
 
     const generateWithAI = async () => {
@@ -30,13 +33,13 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
-                contents: `Create 5 adventure steps for a children's journey titled "${title}". 
+                contents: `Create 5 adventure steps for a children's journey titled "${title}" with the theme "${theme || 'adventure'}". 
                 Return a JSON array of objects with: 
-                - title: short creative title (max 20 chars)
+                - title: short creative title (max 20 chars) in Portuguese
                 - icon: one of [${STEP_ICONS.join(', ')}]
                 - xpReward: number between 50 and 150
-                - xPos: number 10-90
-                - yPos: number 10-90
+                - xPos: number 10-90 (suggest positions that form a logical path)
+                - yPos: number 10-90 (suggest positions that form a logical path)
                 Ensure steps follow a logical path.`,
                 config: { responseMimeType: 'application/json' }
             });
@@ -50,6 +53,7 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                 updatedAt: Date.now()
             }));
             setSteps(formattedSteps);
+            setShowAIPanel(false);
         } catch (error) {
             console.error("AI Generation Error:", error);
             alert("A magia falhou! Tente desenhar manualmente.");
@@ -58,17 +62,40 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
         }
     };
 
-    const handleCanvasClick = (e: React.MouseEvent) => {
-        if (!canvasRef.current) return;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-        const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    const handlePointerDown = (e: React.PointerEvent, id: string) => {
+        e.stopPropagation();
+        setSelectedStepId(id);
+        setDraggedStepId(id);
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    };
 
-        if (selectedStepId) {
-            // Se tem um passo selecionado, move ele para o novo clique
-            updateStep(selectedStepId, { xPos: x, yPos: y });
-        } else {
-            // Se não tem nada selecionado, cria um novo passo
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!draggedStepId || !canvasRef.current) return;
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        // Calculate percentage and snap to 2.5% grid for precision but smoothness
+        const x = Math.min(Math.max(0, Math.round(((e.clientX - rect.left) / rect.width) * 40) * 2.5), 100);
+        const y = Math.min(Math.max(0, Math.round(((e.clientY - rect.top) / rect.height) * 40) * 2.5), 100);
+
+        updateStep(draggedStepId, { xPos: x, yPos: y });
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (draggedStepId) {
+            setDraggedStepId(null);
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        }
+    };
+
+    const handleCanvasClick = (e: React.MouseEvent) => {
+        if (draggedStepId) return; // Don't create if we were dragging
+        if (!canvasRef.current) return;
+        
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = Math.round(((e.clientX - rect.left) / rect.width) * 40) * 2.5;
+        const y = Math.round(((e.clientY - rect.top) / rect.height) * 40) * 2.5;
+
+        if (!selectedStepId) {
             const newStep: DreamStep = {
                 id: Math.random().toString(36).substr(2, 9),
                 title: `Passo ${steps.length + 1}`,
@@ -110,19 +137,44 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                         placeholder="NOME DO REINO"
                     />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 relative">
                     <button 
-                        onClick={generateWithAI}
-                        disabled={isGenerating}
-                        className="w-12 h-12 bg-pink-500/10 text-pink-500 rounded-2xl flex items-center justify-center border border-pink-500/20 active:scale-90 transition-all disabled:opacity-50"
+                        onClick={() => setShowAIPanel(!showAIPanel)}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${showAIPanel ? 'bg-pink-500 text-white border-pink-400' : 'bg-pink-500/10 text-pink-500 border-pink-500/20'}`}
                         title="Gerar com IA"
                     >
-                        {isGenerating ? (
-                            <span className="material-symbols-outlined animate-spin">sync</span>
-                        ) : (
-                            <span className="material-symbols-outlined fill-1">magic_button</span>
-                        )}
+                        <span className="material-symbols-outlined fill-1">magic_button</span>
                     </button>
+                    
+                    {showAIPanel && (
+                        <div className="absolute top-16 right-0 w-72 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl z-[60] animate-pop-in">
+                            <h4 className="text-[10px] font-black uppercase text-pink-400 tracking-[0.2em] mb-4">Gerador de Reinos</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Tema da Aventura</label>
+                                    <input 
+                                        value={theme}
+                                        onChange={(e) => setTheme(e.target.value)}
+                                        placeholder="Ex: Espaço, Piratas, Doces..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-pink-500 transition-all"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={generateWithAI}
+                                    disabled={isGenerating}
+                                    className="w-full py-3 bg-pink-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-pink-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isGenerating ? (
+                                        <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+                                    ) : (
+                                        <span className="material-symbols-outlined text-sm">auto_fix_high</span>
+                                    )}
+                                    {isGenerating ? 'Criando Magia...' : 'Gerar Passos'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <button 
                         onClick={() => onSave(steps, title)}
                         className="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2"
@@ -145,6 +197,7 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                 <div 
                     ref={canvasRef}
                     onClick={handleCanvasClick}
+                    onPointerMove={handlePointerMove}
                     className="flex-1 relative cursor-crosshair overflow-hidden bg-[#020617]"
                     style={{ 
                         backgroundImage: `
@@ -155,6 +208,9 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                         backgroundSize: '40px 40px, 80px 80px, 80px 80px'
                     }}
                 >
+                    {/* Borda de Visão do Mapa */}
+                    <div className="absolute inset-4 border-2 border-white/5 rounded-[3rem] pointer-events-none z-0"></div>
+                    
                     {/* Brilhos de Fundo */}
                     <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-[120px] pointer-events-none"></div>
                     <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -190,9 +246,10 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                     {steps.map((step) => (
                         <div 
                             key={step.id}
-                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ${selectedStepId === step.id ? 'z-40 scale-125' : 'z-10 hover:scale-110'}`}
+                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${selectedStepId === step.id ? 'z-40 scale-125' : 'z-10 hover:scale-110'} ${draggedStepId === step.id ? 'duration-0 cursor-grabbing' : 'cursor-grab'}`}
                             style={{ left: `${step.xPos}%`, top: `${step.yPos}%` }}
-                            onClick={(e) => { e.stopPropagation(); setSelectedStepId(step.id); }}
+                            onPointerDown={(e) => handlePointerDown(e, step.id)}
+                            onPointerUp={handlePointerUp}
                         >
                             <div className={`
                                 w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl border-4 transition-all duration-300
