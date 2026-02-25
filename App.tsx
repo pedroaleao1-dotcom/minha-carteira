@@ -99,8 +99,9 @@ const App: React.FC = () => {
             setMembers(updatedMembers);
             const updatedStore = await db.storeItems.toArray();
             setStoreItems(updatedStore);
-        } catch (e) {
+        } catch (e: any) {
             console.error("Erro no Sync:", e);
+            alert("Erro no Sync Data: " + (e?.message || JSON.stringify(e)));
         } finally {
             setIsSyncing(false);
         }
