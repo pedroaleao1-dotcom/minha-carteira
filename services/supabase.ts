@@ -77,8 +77,8 @@ import { createClient } from '@supabase/supabase-js';
 import { Member, StoreItem, GlobalSettings, LevelConfig, JourneyTemplate, DreamStep } from '../types';
 import { db } from './db';
 
-const SUPABASE_URL = 'https://omsjbleuvmwdqfcbzmjs.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_nqcylCcbP2z1YeeRZucUig_ggUhr6Wj';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
