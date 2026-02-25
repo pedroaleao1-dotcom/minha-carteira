@@ -89,11 +89,15 @@ const App: React.FC = () => {
         if (!navigator.onLine || isSyncing) return;
         setIsSyncing(true);
         try {
-            await pullFromCloud();
+            // Push local data first so we don't overwrite unsynced data
             const localMembers = await db.members.toArray();
             await pushMembersToCloud(localMembers);
+            
             const localStore = await db.storeItems.toArray();
             await pushStoreItemsToCloud(localStore);
+            
+            // Then pull from cloud to get updates from other devices
+            await pullFromCloud();
             
             const updatedMembers = await db.members.toArray();
             setMembers(updatedMembers);
