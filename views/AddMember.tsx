@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface Props {
     memberToEdit?: Member | null;
-    onSave: (member: Omit<Member, 'id' | 'level' | 'xp' | 'coins' | 'dreams' | 'tasks' | 'achievements' | 'redemptions' | 'history' | 'notifications'>) => void;
+    onSave: (member: Omit<Member, 'id' | 'level' | 'xp' | 'coins' | 'dreams' | 'tasks' | 'achievements' | 'redemptions' | 'history' | 'notifications' | 'taskCompletions'>) => void;
     onBack: () => void;
 }
 
@@ -63,14 +63,12 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
     const handleSave = () => {
         if (!name.trim()) return;
         
-        // Fix: Added updatedAt and taskCompletions to satisfy Member interface requirements
         onSave({
             name,
             role,
             avatar,
             badge: role === 'child' ? 'star' : 'settings',
-            updatedAt: Date.now(),
-            taskCompletions: []
+            updatedAt: Date.now()
         });
     };
 
