@@ -105,22 +105,6 @@ const RoleSelection: React.FC<Props> = ({ members, onSelect, onAddNew, isLoading
                 </div>
             )}
 
-            {/* Bottom Navigation Mock */}
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-md border-t border-slate-100 rounded-t-[3rem] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] flex justify-around items-center z-50">
-                <button className="flex flex-col items-center gap-1 text-pink-500">
-                    <span className="material-symbols-outlined fill-1">grid_view</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Início</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 text-slate-400">
-                    <span className="material-symbols-outlined">emoji_events</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Ranking</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 text-slate-400">
-                    <span className="material-symbols-outlined">settings</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Ajustes</span>
-                </button>
-            </div>
-
             {members.length === 0 && !isLoading && (
                 <div className="mt-8 text-center px-10">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O Reino está vazio! Toque em "Novo" para começar a aventura.</p>

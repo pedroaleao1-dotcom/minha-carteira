@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import { Member, UserRole } from '../types';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface Props {
     memberToEdit?: Member | null;
@@ -15,12 +18,47 @@ const PRESET_AVATARS = [
     'https://api.dicebear.com/7.x/willow/svg?seed=Willow&backgroundColor=ffd5dc',
     'https://api.dicebear.com/7.x/bottts/svg?seed=Sparky&backgroundColor=d1d4f9',
     'https://api.dicebear.com/7.x/bottts/svg?seed=Robo&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/big-ears/svg?seed=Buster&backgroundColor=c0aede',
 ];
 
 const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
     const [name, setName] = useState(memberToEdit?.name || '');
     const [role, setRole] = useState<UserRole>(memberToEdit?.role || 'child');
     const [avatar, setAvatar] = useState(memberToEdit?.avatar || PRESET_AVATARS[0]);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const generateAIAvatar = async () => {
+        if (!aiPrompt.trim()) return;
+        setIsGenerating(true);
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: {
+                    parts: [
+                        {
+                            text: `A cute, high-quality, 3D animated style avatar for a kid's game. Character description: ${aiPrompt}. The background should be a solid soft color. Square aspect ratio.`,
+                        },
+                    ],
+                },
+            });
+
+            for (const part of response.candidates?.[0]?.content?.parts || []) {
+                if (part.inlineData) {
+                    const base64Data = part.inlineData.data;
+                    setAvatar(`data:image/png;base64,${base64Data}`);
+                    break;
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao gerar avatar:", error);
+            alert("O Reino está com muita neblina agora! Tente novamente em instantes.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const handleSave = () => {
         if (!name.trim()) return;
@@ -85,7 +123,7 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
                 {/* Avatares */}
                 <div className="space-y-4 bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Escolha o Visual</label>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4 mb-6">
                         {PRESET_AVATARS.map((url, i) => (
                             <button 
                                 key={i}
@@ -95,6 +133,38 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
                                 <img src={url} className="w-full h-full object-cover" alt="" />
                             </button>
                         ))}
+                        {avatar && !PRESET_AVATARS.includes(avatar) && (
+                            <button 
+                                className="aspect-square rounded-full overflow-hidden border-4 border-pink-500 scale-110 shadow-lg"
+                            >
+                                <img src={avatar} className="w-full h-full object-cover" alt="Custom AI Avatar" />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-50">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Ou crie com Magia (IA)</label>
+                        <div className="mt-3 flex gap-2">
+                            <input 
+                                type="text"
+                                value={aiPrompt}
+                                onChange={(e) => setAiPrompt(e.target.value)}
+                                placeholder="Ex: Um herói com capa azul e óculos..."
+                                className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-pink-500 transition-colors"
+                            />
+                            <button 
+                                onClick={generateAIAvatar}
+                                disabled={isGenerating || !aiPrompt.trim()}
+                                className="bg-pink-500 text-white px-4 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isGenerating ? (
+                                    <span className="material-symbols-outlined animate-spin text-lg">sync</span>
+                                ) : (
+                                    <span className="material-symbols-outlined text-lg">magic_button</span>
+                                )}
+                                {isGenerating ? 'Criando...' : 'Gerar'}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
