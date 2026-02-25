@@ -42,9 +42,13 @@ const RoleSelection: React.FC<Props> = ({ members, onSelect, onAddNew, isLoading
                 <span className="material-symbols-outlined text-amber-400 text-3xl font-black fill-1">rocket_launch</span>
             </div>
 
-            <h1 className="text-[32px] font-black text-[#1e293b] text-center leading-[1.1] mb-16">
-                Quem vai<br/>brincar hoje?
+            <h1 className="text-[32px] font-black text-[#1e293b] text-center leading-[1.1] mb-2">
+                Quem vai brincar
             </h1>
+            <h2 className="text-[32px] font-black text-pink-500 text-center leading-[1.1] mb-4">
+                hoje?
+            </h2>
+            <p className="text-slate-400 font-bold text-sm mb-16 text-center">Escolha seu perfil para começar</p>
 
             {isLoading ? (
                 <div className="flex flex-col items-center gap-4 opacity-50">
@@ -52,43 +56,51 @@ const RoleSelection: React.FC<Props> = ({ members, onSelect, onAddNew, isLoading
                     <p className="text-[10px] font-black uppercase tracking-widest">Invocando Heróis...</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 gap-x-6 gap-y-12 w-full max-w-xs pb-12">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-12 w-full max-w-xs pb-32">
                     {members.map(member => (
                         <div key={member.id} className="flex flex-col items-center animate-pop-in">
                             <button 
                                 onClick={() => handleMemberClick(member)}
-                                className="w-full aspect-square bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-3 flex items-center justify-center active:scale-95 transition-all relative group"
+                                className="w-full aspect-square bg-white rounded-full shadow-xl border-4 border-white p-1 flex items-center justify-center active:scale-95 transition-all relative group"
                             >
-                                <div className="w-full h-full rounded-full overflow-hidden border-4 border-slate-50 relative">
+                                <div className="w-full h-full rounded-full overflow-hidden relative">
                                     <img src={member.avatar} className="w-full h-full object-cover" alt={member.name} />
                                     
-                                    <div className={`absolute bottom-0 right-0 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-md ${
+                                    <div className={`absolute bottom-2 right-2 w-10 h-10 rounded-full border-4 border-white flex items-center justify-center shadow-lg ${
                                         member.badge === 'star' ? 'bg-amber-400' : 
                                         member.badge === 'heart' ? 'bg-pink-400' : 
-                                        member.badge === 'settings' ? 'bg-slate-700' : 'bg-slate-400'
+                                        member.badge === 'settings' ? 'bg-blue-500' : 'bg-slate-400'
                                     }`}>
-                                        <span className="material-symbols-outlined text-white text-[16px] font-black fill-1">
+                                        <span className="material-symbols-outlined text-white text-[20px] font-black fill-1">
                                             {member.badge === 'star' ? 'star' : 
                                              member.badge === 'heart' ? 'favorite' : 
-                                             member.badge === 'settings' ? 'settings' : 'person'}
+                                             member.badge === 'settings' ? 'shield' : 'person'}
                                         </span>
                                     </div>
                                 </div>
                             </button>
-                            <span className="mt-3 font-black text-slate-500 text-lg">{member.name}</span>
+                            <span className="mt-4 font-black text-slate-800 text-xl">{member.name}</span>
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
+                                member.badge === 'star' ? 'text-amber-500' : 
+                                member.badge === 'heart' ? 'text-pink-500' : 
+                                member.badge === 'settings' ? 'text-blue-500' : 'text-slate-400'
+                            }`}>
+                                {member.role === 'parent' ? 'Herói' : member.badge === 'star' ? 'Estrela' : 'Coração'}
+                            </span>
                         </div>
                     ))}
 
                     <div className="flex flex-col items-center animate-pop-in">
                         <button 
                             onClick={onAddNew}
-                            className="w-full aspect-square bg-white rounded-[2rem] shadow-sm border-2 border-dashed border-slate-200 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-100 group"
+                            className="w-full aspect-square bg-white rounded-full shadow-sm border-4 border-dashed border-slate-200 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-50 group"
                         >
-                            <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:text-amber-500 transition-colors">
-                                <span className="material-symbols-outlined text-4xl">add</span>
+                            <div className="w-12 h-12 flex items-center justify-center text-pink-500">
+                                <span className="material-symbols-outlined text-5xl font-black">add</span>
                             </div>
                         </button>
-                        <span className="mt-3 font-black text-slate-300 text-lg uppercase tracking-widest text-[10px]">Novo Herói</span>
+                        <span className="mt-4 font-black text-pink-500 text-xl">Novo Herói</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Adicionar</span>
                     </div>
                 </div>
             )}
