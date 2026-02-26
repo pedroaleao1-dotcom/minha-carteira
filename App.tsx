@@ -150,23 +150,26 @@ const App: React.FC = () => {
     const [syncTimeout, setSyncTimeout] = useState<NodeJS.Timeout | null>(null);
 
     const updateMemberById = async (id: string, updater: (m: Member) => Member) => {
-        const currentMember = members.find(m => m.id === id);
-        if (!currentMember) return;
-        
-        const updated = { ...updater(currentMember), updatedAt: Date.now() };
-        
-        // Update local state and DB immediately (Optimistic)
-        await db.members.put(updated);
-        setMembers(prev => prev.map(m => m.id === id ? updated : m));
-        
-        // Debounce cloud sync
-        if (navigator.onLine) {
-            if (syncTimeout) clearTimeout(syncTimeout);
-            const timeout = setTimeout(() => {
-                pushToCloud(updated);
-            }, 2000); // Wait 2 seconds of inactivity before pushing
-            setSyncTimeout(timeout);
-        }
+        setMembers(prevMembers => {
+            const currentMember = prevMembers.find(m => m.id === id);
+            if (!currentMember) return prevMembers;
+
+            const updated = { ...updater(currentMember), updatedAt: Date.now() };
+
+            // Update local DB asynchronously (Optimistic)
+            db.members.put(updated).catch(e => console.error("Error updating local DB:", e));
+
+            // Debounce cloud sync
+            if (navigator.onLine) {
+                if (syncTimeout) clearTimeout(syncTimeout);
+                const timeout = setTimeout(() => {
+                    pushToCloud(updated);
+                }, 2000);
+                setTimeout(() => setSyncTimeout(timeout), 0); // Avoid state update conflict warning
+            }
+
+            return prevMembers.map(m => m.id === id ? updated : m);
+        });
     };
 
     const deleteMember = async (id: string) => {
@@ -274,8 +277,8 @@ const App: React.FC = () => {
             default:
                 if (!activeMember) return null;
                 switch (view) {
-                    case 'child_dash': return <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={handleLogout} />;
-                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={activeMembers} onApprove={approveTask} onLogout={handleLogout} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onOpenReports={() => setView('reports')} onManageMembers={() => setView('manage_members')} onManageTemplates={() => setView('manage_templates')} />;
+                    case 'child_dash': return <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={handleLogout} onChangeProfile={() => setView('role')} />;
+                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={activeMembers} onApprove={approveTask} onLogout={handleLogout} onChangeProfile={() => setView('role')} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onOpenReports={() => setView('reports')} onManageMembers={() => setView('manage_members')} onManageTemplates={() => setView('manage_templates')} />;
                     case 'reports': return <Reports members={activeMembers.filter(m => m.role === 'child')} onBack={() => setView('parent_dash')} />;
                     case 'kingdom_explorer': return <KingdomExplorer member={activeMember} onSelectTemplate={startJourneyFromTemplate} onBack={() => setView('child_dash')} />;
                     case 'request_mission': return <RequestMission onPropose={(prop) => { updateMemberById(activeMember.id, m => ({ ...m, tasks: [...m.tasks, { ...prop, id: Math.random().toString(36).substr(2, 9), reward: 0, xp: 0, status: 'pending', frequency: 'once', category: 'chore', assignedTo: [activeMember.id], updatedAt: Date.now() } as any] })); setView('child_dash'); }} onBack={() => setView('child_dash')} />;

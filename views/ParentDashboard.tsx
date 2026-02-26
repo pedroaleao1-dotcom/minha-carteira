@@ -7,6 +7,7 @@ interface Props {
     members: Member[];
     onApprove: (taskId: string) => void;
     onLogout: () => void;
+    onChangeProfile: () => void;
     onAddTask: () => void;
     onAddStoreItem: () => void;
     onOpenCouncil: () => void;
@@ -17,8 +18,8 @@ interface Props {
     onManageTemplates: () => void;
 }
 
-const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports, onManageMembers, onManageTemplates }) => {
-    const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending'));
+const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onChangeProfile, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports, onManageMembers, onManageTemplates }) => {
+    const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending').map(t => ({ ...t, memberName: m.name, memberAvatar: m.avatar })));
     const children = members.filter(m => m.role === 'child');
 
     return (
@@ -33,10 +34,16 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                         <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Mentor do Reino</p>
                     </div>
                 </div>
-                <button onClick={onLogout} className="text-slate-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all">
-                    <span className="material-symbols-outlined text-lg">logout</span>
-                    <span className="text-[10px] font-black uppercase tracking-tighter">Sair</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={onChangeProfile} className="text-slate-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all">
+                        <span className="material-symbols-outlined text-lg">group</span>
+                        <span className="text-[10px] font-black uppercase tracking-tighter">Perfis</span>
+                    </button>
+                    <button onClick={onLogout} className="text-red-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all">
+                        <span className="material-symbols-outlined text-lg">logout</span>
+                        <span className="text-[10px] font-black uppercase tracking-tighter">Sair</span>
+                    </button>
+                </div>
             </header>
 
             <main className="space-y-6">
@@ -112,10 +119,13 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                             {allPendingTasks.map(task => (
                                 <div key={task.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 flex flex-col gap-4 animate-pop-in">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0"><span className="material-symbols-outlined">{task.icon}</span></div>
+                                        <div className="relative w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
+                                            <span className="material-symbols-outlined">{task.icon}</span>
+                                            <img src={task.memberAvatar} className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white bg-slate-100" />
+                                        </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-slate-800 text-sm truncate">{task.title}</h3>
-                                            <p className="text-[10px] text-amber-600 font-black uppercase">Prêmio: {task.reward} MOEDAS</p>
+                                            <p className="text-[10px] text-amber-600 font-black uppercase">Prêmio: {task.reward} MOEDAS • {task.memberName}</p>
                                         </div>
                                     </div>
                                     <button onClick={() => onApprove(task.id)} className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs active-press shadow-lg flex items-center justify-center gap-2">

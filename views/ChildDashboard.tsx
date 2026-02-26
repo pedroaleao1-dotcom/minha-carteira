@@ -8,9 +8,10 @@ interface Props {
     onNavigate: (view: any) => void;
     onOpenDream: (id: string) => void;
     onLogout: () => void;
+    onChangeProfile: () => void;
 }
 
-const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLogout }) => {
+const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLogout, onChangeProfile }) => {
     // Busca TODAS as tarefas pendentes do herói
     const activeTasks = child.tasks.filter(t => t.status === 'todo');
     const activeDreams = child.dreams.filter(d => d.status === 'active');
@@ -20,10 +21,16 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLog
             {/* Header: Status e Perfil */}
             <header className="flex flex-col items-center mb-6 pt-4">
                 <div className="w-full flex justify-between items-center mb-6">
-                    <button onClick={onLogout} className="text-slate-400 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 active:scale-90 transition-all">
-                        <span className="material-symbols-outlined text-lg">logout</span>
-                        <span className="text-[10px] font-black uppercase tracking-tighter">Sair</span>
-                    </button>
+                    <div className="flex gap-2 items-center">
+                        <button onClick={onChangeProfile} className="text-slate-400 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 active:scale-90 transition-all">
+                            <span className="material-symbols-outlined text-lg">group</span>
+                            <span className="text-[10px] font-black uppercase tracking-tighter hidden sm:inline">Perfis</span>
+                        </button>
+                        <button onClick={onLogout} className="text-red-400 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 active:scale-90 transition-all">
+                            <span className="material-symbols-outlined text-lg">logout</span>
+                            <span className="text-[10px] font-black uppercase tracking-tighter hidden sm:inline">Sair</span>
+                        </button>
+                    </div>
                     
                     <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="text-right">
