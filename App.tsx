@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Member, Task, StoreItem, Dream, TaskCompletion, DreamStep, JourneyTemplate } from './types';
 
 // Importação das Páginas (Views)
+import Login from './views/Login';
 import RoleSelection from './views/RoleSelection';
 import ChildDashboard from './views/ChildDashboard';
 import ParentDashboard from './views/ParentDashboard';
@@ -28,6 +29,7 @@ import KingdomExplorer from './views/KingdomExplorer';
 import RequestMission from './views/RequestMission';
 
 // Serviços
+import { getCurrentUser, getLinkedMembers, signOutUser } from './services/auth';
 import { db } from './services/db';
 import { supabase, pushToCloud, pushMembersToCloud, pullFromCloud, pushStoreItem, pushStoreItemsToCloud, upsertMember, pushJourneyTemplate, fetchJourneyTemplates } from './services/supabase';
 import { generateDreamSteps } from './services/gemini';
@@ -60,6 +62,8 @@ type View =
 
 const App: React.FC = () => {
     const [view, setView] = useState<View>('role');
+    const [user, setUser] = useState<any>(null);
+    const [linkedMembers, setLinkedMembers] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -113,12 +117,31 @@ const App: React.FC = () => {
     useEffect(() => {
         const init = async () => {
             setIsLoading(true);
-            const localMembers = await db.members.toArray();
-            const localStore = await db.storeItems.toArray();
-            setMembers(localMembers);
-            setStoreItems(localStore);
-            setIsLoading(false);
-            if (navigator.onLine) syncData();
+            
+            try {
+                // Checa Auth
+                const sessionUser = await getCurrentUser();
+                
+                // Puxa Dados Locais
+                const localMembers = await db.members.toArray();
+                const localStore = await db.storeItems.toArray();
+                setMembers(localMembers);
+                setStoreItems(localStore);
+                
+                if (sessionUser) {
+                    setUser(sessionUser);
+                    const links = await getLinkedMembers(sessionUser.id);
+                    setLinkedMembers(links);
+                } else {
+                    setView('role'); // Não faz muita diferença, pois renderView vai interceptar
+                }
+                
+                setIsLoading(false);
+                if (navigator.onLine && sessionUser) syncData();
+            } catch (err) {
+                console.error("Erro na inicialização:", err);
+                setIsLoading(false);
+            }
         };
         init();
     }, []);
@@ -151,10 +174,29 @@ const App: React.FC = () => {
         await updateMemberById(id, m => ({ ...m, status: 'inactive' }));
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await signOutUser();
+        setUser(null);
+        setLinkedMembers([]);
         setActiveMemberId(null);
         setSelectedDreamId(null);
         setView('role');
+    };
+
+    const handleLoginSuccess = async (userId: string) => {
+        setIsLoading(true);
+        try {
+            const sessionUser = await getCurrentUser();
+            const links = await getLinkedMembers(userId);
+            setUser(sessionUser);
+            setLinkedMembers(links);
+            setView('role');
+            if (navigator.onLine) syncData();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const startJourneyFromTemplate = async (template: JourneyTemplate) => {
@@ -209,7 +251,12 @@ const App: React.FC = () => {
     };
 
     const renderView = () => {
-        const activeMembers = members.filter(m => m.status !== 'inactive');
+        // Seção Não Autenticada
+        if (!user && !isLoading) {
+            return <Login onLoginSuccess={handleLoginSuccess} />;
+        }
+
+        const activeMembers = members.filter(m => m.status !== 'inactive' && linkedMembers.includes(m.id));
         
         if (isLoading) return (
             <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-slate-50">
