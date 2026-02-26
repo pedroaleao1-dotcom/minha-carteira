@@ -334,7 +334,7 @@ export const pullFromCloud = async () => {
             await db.storeItems.bulkPut(itemsToPut);
         }
     } catch (e: any) {
-        console.error("Erro ao baixar dados:", e);
+        console.error("Erro ao baixar dados relacionais:", e);
         alert("Erro no pullFromCloud: " + (e?.message || JSON.stringify(e)));
     }
 };
