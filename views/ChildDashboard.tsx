@@ -70,7 +70,7 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLog
                     </div>
                     <div className="relative z-10 flex flex-col justify-center h-full">
                         <h2 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-1">Explorar</h2>
-                        <h3 className="text-2xl font-black">Reinos Mágicos</h3>
+                        <h3 className="text-2xl font-black">Sonhos Mágicos</h3>
                     </div>
                     <span className="absolute bottom-6 right-6 material-symbols-outlined text-3xl animate-float">travel_explore</span>
                 </button>

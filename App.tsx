@@ -206,6 +206,63 @@ const App: React.FC = () => {
         }));
     };
 
+    const completeDreamStep = async (memberId: string, dreamId: string, stepId: string) => {
+        const member = members.find(m => m.id === memberId);
+        if (!member) return;
+        const dream = member.dreams.find(d => d.id === dreamId);
+        if (!dream || !dream.steps) return;
+        const step = dream.steps.find(s => s.id === stepId);
+        if (!step || step.isCompleted) return;
+
+        const now = Date.now();
+        await updateMemberById(memberId, m => ({
+            ...m,
+            xp: m.xp + step.xpReward,
+            coins: m.coins + (step.coinReward || 0),
+            dreams: m.dreams.map(d => d.id === dreamId ? {
+                ...d,
+                currentAmount: d.currentAmount + (step.coinReward || 0),
+                steps: d.steps?.map(s => s.id === stepId ? { ...s, isCompleted: true, updatedAt: now } : s)
+            } : d),
+            history: [
+                { 
+                    id: `tx-dream-${now}`, 
+                    type: 'reward', 
+                    title: `Passo Concluído: ${step.title}`, 
+                    amount: step.coinReward || 0, 
+                    icon: step.icon, 
+                    timestamp: now, 
+                    updatedAt: now 
+                }, 
+                ...m.history
+            ]
+        }));
+    };
+
+    const applyTemplateToMember = async (template: JourneyTemplate, memberId: string) => {
+        const targetMember = members.find(m => m.id === memberId);
+        if (!targetMember) return;
+
+        const newDream: Dream = {
+            id: Math.random().toString(36).substr(2, 9),
+            title: template.title,
+            icon: template.icon,
+            targetAmount: template.steps.length * 100,
+            currentAmount: 0,
+            status: 'active',
+            templateId: template.id,
+            steps: template.steps.map(s => ({ ...s, isCompleted: false })),
+            updatedAt: Date.now()
+        };
+
+        await updateMemberById(memberId, m => ({
+            ...m,
+            dreams: [...m.dreams, newDream]
+        }));
+        
+        alert(`Mapa "${template.title}" atribuído com sucesso para ${targetMember.name}!`);
+    };
+
     const renderView = () => {
         if (isLoading) return (
             <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-slate-50">
@@ -219,7 +276,26 @@ const App: React.FC = () => {
             case 'add_member':
             case 'edit_member': return <AddMember memberToEdit={memberToEdit} onSave={async (m) => { if (memberToEdit) { await updateMemberById(memberToEdit.id, prev => ({ ...prev, ...m })); } else { const newM = {...m, id: Math.random().toString(36).substr(2, 9), level: 1, xp: 0, coins: 0, dreams: [], tasks: [], taskCompletions: [], achievements: [], redemptions: [], history: [], updatedAt: Date.now()}; await db.members.put(newM as Member); setMembers(prev => [...prev, newM as Member]); if(navigator.onLine) pushToCloud(newM as Member); } setView(activeMemberId ? 'manage_members' : 'role'); }} onBack={() => setView(activeMemberId ? 'manage_members' : 'role')} />;
             case 'manage_members': return <ManageMembers members={members} onEdit={(m) => { setMemberToEdit(m); setView('edit_member'); }} onDelete={deleteMember} onAdd={() => { setMemberToEdit(null); setView('add_member'); }} onBack={() => setView('parent_dash')} />;
-            case 'manage_templates': return <ManageTemplates onEditTemplate={(t) => { setTemplateToEdit(t); setView('map_editor'); }} onEditHeroMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onBack={() => setView('parent_dash')} />;
+            case 'manage_templates': return (
+                <ManageTemplates 
+                    onEditTemplate={(t) => { setTemplateToEdit(t); setSelectedDreamId(null); setView('map_editor'); }} 
+                    onEditHeroMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} 
+                    onAddDream={(memberId) => { 
+                        setMemberToEdit(members.find(m => m.id === memberId) || null);
+                        setView('add_dream'); 
+                    }}
+                    onDeleteDream={(mId, dId) => {
+                        if (confirm("Tem certeza que deseja apagar este sonho e todo o progresso do mapa?")) {
+                            updateMemberById(mId, m => ({
+                                ...m,
+                                dreams: m.dreams.filter(d => d.id !== dId)
+                            }));
+                        }
+                    }}
+                    onApplyTemplate={applyTemplateToMember}
+                    onBack={() => setView('parent_dash')} 
+                />
+            );
             default:
                 if (!activeMember) return null;
                 switch (view) {
@@ -230,7 +306,7 @@ const App: React.FC = () => {
                     case 'request_mission': return <RequestMission onPropose={(prop) => { updateMemberById(activeMember.id, m => ({ ...m, tasks: [...m.tasks, { ...prop, id: Math.random().toString(36).substr(2, 9), reward: 0, xp: 0, status: 'pending', frequency: 'once', category: 'chore', assignedTo: [activeMember.id], updatedAt: Date.now() } as any] })); setView('child_dash'); }} onBack={() => setView('child_dash')} />;
                     case 'map_editor': return <MapEditor dream={selectedDream} template={templateToEdit || undefined} onSave={async (steps, newTitle) => { if (templateToEdit) { const updatedT = { ...templateToEdit, title: newTitle || templateToEdit.title, steps, updatedAt: Date.now() }; await db.journeyTemplates.put(updatedT); if (navigator.onLine) pushJourneyTemplate(updatedT); setView('manage_templates'); } else if (selectedDream) { const owner = members.find(m => m.dreams.some(d => d.id === selectedDreamId)); if (owner) updateMemberById(owner.id, m => ({...m, dreams: m.dreams.map(d => d.id === selectedDreamId ? {...d, steps} : d)})); setView('manage_templates'); } }} onBack={() => setView(templateToEdit ? 'manage_templates' : 'parent_dash')} />;
                     case 'dream_gallery': return <DreamGallery dreams={activeMember.dreams} onSelect={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onAdd={() => setView('add_dream')} onBack={() => setView('child_dash')} />;
-                    case 'dream_details': return selectedDream ? <DreamDetails dream={selectedDream} coins={activeMember.coins} onAddCoins={(amt) => updateMemberById(activeMember.id, m => ({...m, coins: m.coins - amt, dreams: m.dreams.map(d => d.id === selectedDreamId ? {...d, currentAmount: d.currentAmount + amt} : d)}))} onBack={() => setView('dream_gallery')} /> : null;
+                    case 'dream_details': return selectedDream ? <DreamDetails dream={selectedDream} coins={activeMember.coins} onAddCoins={(amt) => updateMemberById(activeMember.id, m => ({...m, coins: m.coins - amt, dreams: m.dreams.map(d => d.id === selectedDreamId ? {...d, currentAmount: d.currentAmount + amt} : d)}))} onViewJourney={(id) => { setSelectedDreamId(id); setView('journey'); }} onBack={() => setView('dream_gallery')} /> : null;
                     case 'tasks': return <TaskList tasks={activeMember.tasks} onComplete={(id) => updateMemberById(activeMember.id, m => ({...m, tasks: m.tasks.map(t => t.id === id ? {...t, status: 'pending'} : t)}))} onBack={() => setView('child_dash')} />;
                     case 'store': return <Store coins={activeMember.coins} storeItems={storeItems.filter(si => si.assignedTo.includes(activeMember.id))} redemptions={activeMember.redemptions} onBuy={(item) => updateMemberById(activeMember.id, m => ({...m, coins: m.coins - item.price, redemptions: [...m.redemptions, {id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'pending', timestamp: Date.now(), updatedAt: Date.now()}]}))} onBack={() => setView('child_dash')} />;
                     case 'profile': return <Profile child={activeMember} storeItems={storeItems} onNavigate={setView} onBack={() => setView(activeMember.role === 'parent' ? 'parent_dash' : 'child_dash')} onUpdateAvatar={(img) => updateMemberById(activeMember.id, m => ({...m, avatar: img}))} onBuyItem={(item) => activeMember.coins >= item.price && updateMemberById(activeMember.id, m => ({...m, coins: m.coins - item.price, redemptions: [...m.redemptions, {id: Math.random().toString(36).substr(2, 9), itemId: item.id, title: item.title, icon: item.icon, status: 'delivered', timestamp: Date.now(), updatedAt: Date.now()}]}))} onSellItem={() => {}} />;
@@ -238,10 +314,25 @@ const App: React.FC = () => {
                     case 'xp': return <XPView child={activeMember} onBack={() => setView('child_dash')} />;
                     case 'achievements': return <Achievements achievements={activeMember.achievements} onBack={() => setView('child_dash')} />;
                     case 'add_task': return <AddTask members={members} onAdd={async (t) => { t.assignedTo.forEach(id => updateMemberById(id, m => ({...m, tasks: [...m.tasks, {...t, id: Math.random().toString(36).substr(2, 9), status: 'todo', updatedAt: Date.now()}] as any}))); setView('parent_dash'); }} onBack={() => setView('parent_dash')} />;
-                    case 'add_dream': return <AddDream onAdd={(dream) => { updateMemberById(activeMember.id, m => ({ ...m, dreams: [...m.dreams, { ...dream, id: Math.random().toString(36).substr(2, 9), currentAmount: 0 } as any] })); setView('dream_gallery'); }} onBack={() => setView('dream_gallery')} />;
+                    case 'add_dream': return (
+                        <AddDream 
+                            members={activeMember.role === 'parent' ? members : undefined}
+                            onAdd={(dream, memberIds) => { 
+                                const targetIds = memberIds.length > 0 ? memberIds : [memberToEdit?.id || activeMember.id];
+                                targetIds.forEach(id => {
+                                    updateMemberById(id, m => ({ 
+                                        ...m, 
+                                        dreams: [...m.dreams, { ...dream, id: Math.random().toString(36).substr(2, 9), currentAmount: 0 } as any] 
+                                    })); 
+                                });
+                                setView(activeMember.role === 'parent' ? 'manage_templates' : 'dream_gallery'); 
+                            }} 
+                            onBack={() => setView(activeMember.role === 'parent' ? 'manage_templates' : 'dream_gallery')} 
+                        />
+                    );
                     case 'add_store_item': return <AddStoreItem members={members} onAdd={async (item) => { const newI = {...item, id: Math.random().toString(36).substr(2, 9), updatedAt: Date.now()}; await db.storeItems.put(newI); setStoreItems(prev => [...prev, newI]); if(navigator.onLine) pushStoreItem(newI); setView('parent_dash'); }} onBack={() => setView('parent_dash')} />;
                     case 'council_room': return <CouncilRoom members={members} onBack={() => setView('parent_dash')} />;
-                    case 'journey': return <JourneyPath member={activeMember} selectedDreamId={selectedDreamId || undefined} onSelectDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onBack={() => setView('kingdom_explorer')} />;
+                    case 'journey': return <JourneyPath member={activeMember} selectedDreamId={selectedDreamId || undefined} onSelectDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onCompleteStep={(dId, sId) => completeDreamStep(activeMember.id, dId, sId)} onBack={() => setView('kingdom_explorer')} />;
                     default: return <RoleSelection members={members} onSelect={(id) => setView('child_dash')} onAddNew={() => { setMemberToEdit(null); setView('add_member'); }} />;
                 }
         }

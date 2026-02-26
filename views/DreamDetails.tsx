@@ -7,10 +7,11 @@ interface Props {
     dream: Dream;
     coins: number;
     onAddCoins: (amount: number) => void;
+    onViewJourney: (dreamId: string) => void;
     onBack: () => void;
 }
 
-const DreamDetails: React.FC<Props> = ({ dream, coins, onAddCoins, onBack }) => {
+const DreamDetails: React.FC<Props> = ({ dream, coins, onAddCoins, onViewJourney, onBack }) => {
     const [tip, setTip] = useState<string>("Carregando dica do Mestre...");
     const progressPercent = Math.round((dream.currentAmount / dream.targetAmount) * 100);
     const missing = dream.targetAmount - dream.currentAmount;
@@ -25,7 +26,7 @@ const DreamDetails: React.FC<Props> = ({ dream, coins, onAddCoins, onBack }) => 
     };
 
     return (
-        <div className="flex-1 flex flex-col p-6">
+        <div className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen">
             <header className="flex items-center justify-between mb-8 pt-4">
                 <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-700 active:scale-90 transition-all">
                     <span className="material-symbols-outlined">arrow_back</span>
@@ -34,7 +35,17 @@ const DreamDetails: React.FC<Props> = ({ dream, coins, onAddCoins, onBack }) => 
                 <div className="w-12 h-12"></div>
             </header>
 
-            <main className="flex-1 flex flex-col items-center">
+            <main className="flex-1 flex flex-col items-center pb-12">
+                {dream.steps && dream.steps.length > 0 && (
+                    <button 
+                        onClick={() => onViewJourney(dream.id)}
+                        className="w-full mb-6 bg-sky-600 text-white p-4 rounded-[2rem] font-black shadow-xl active-press flex items-center justify-center gap-3 animate-pop-in"
+                        id="view-journey-map-btn"
+                    >
+                        <span className="material-symbols-outlined text-2xl">explore</span>
+                        <span className="text-xs uppercase tracking-widest">Ver Mapa da Jornada</span>
+                    </button>
+                )}
                 <div className="relative w-full aspect-square max-w-[280px] mb-8 group">
                     <div className="absolute inset-0 bg-white rounded-[4rem] shadow-2xl overflow-hidden border-8 border-white p-4">
                         <div className="relative w-full h-full bg-slate-50 rounded-[3rem] overflow-hidden flex items-center justify-center">

@@ -1,22 +1,25 @@
 
 import React, { useState, useRef } from 'react';
-import { Dream } from '../types';
+import { Dream, Member } from '../types';
 import { generateDreamImage } from '../services/gemini';
 
 interface Props {
-    onAdd: (dream: Omit<Dream, 'id' | 'currentAmount'>) => void;
+    members?: Member[];
+    onAdd: (dream: Omit<Dream, 'id' | 'currentAmount'>, memberIds: string[]) => void;
     onBack: () => void;
 }
 
 const DREAM_ICONS = ['rocket_launch', 'pedal_bike', 'sports_esports', 'toys', 'auto_stories', 'brush', 'pets', 'star'];
 
-const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
+const AddDream: React.FC<Props> = ({ members, onAdd, onBack }) => {
     const [title, setTitle] = useState('');
     const [targetAmount, setTargetAmount] = useState(100);
+    const [totalXpTarget, setTotalXpTarget] = useState(500);
     const [icon, setIcon] = useState('rocket_launch');
     const [photo, setPhoto] = useState<string | null>(null);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -83,15 +86,15 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
 
     const handleAdd = () => {
         if (!title) return;
-        // Fix: Added updatedAt to comply with Dream interface requirements
         onAdd({
             title,
             targetAmount,
+            totalXpTarget,
             icon,
             imageUrl: photo || `https://picsum.photos/seed/${title}/400/300`,
             status: 'active',
             updatedAt: Date.now()
-        });
+        }, selectedMemberIds);
     };
 
     return (
@@ -209,23 +212,29 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Preço Estimado</label>
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Moedas Alvo</label>
+                            <div className="bg-amber-100 px-4 py-3 rounded-2xl flex items-center gap-2 border border-amber-200 shadow-sm">
+                                <span className="material-symbols-outlined text-amber-500 fill-1 text-sm">monetization_on</span>
                                 <input 
-                                    type="range" 
-                                    min="20" 
-                                    max="1000" 
-                                    step="20"
+                                    type="number"
                                     value={targetAmount}
                                     onChange={(e) => setTargetAmount(Number(e.target.value))}
-                                    className="flex-1 h-3 bg-slate-100 rounded-full appearance-none cursor-pointer accent-[#2b8cee] border border-slate-200"
+                                    className="bg-transparent font-black text-amber-600 text-sm w-full outline-none"
                                 />
-                                <div className="bg-amber-100 px-5 py-3 rounded-2xl flex items-center gap-1 border border-amber-200 shadow-sm shrink-0">
-                                    <span className="material-symbols-outlined text-amber-500 fill-1">monetization_on</span>
-                                    <span className="font-black text-amber-600 text-lg">{targetAmount}</span>
-                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">XP Total</label>
+                            <div className="bg-sky-100 px-4 py-3 rounded-2xl flex items-center gap-2 border border-sky-200 shadow-sm">
+                                <span className="material-symbols-outlined text-sky-500 fill-1 text-sm">bolt</span>
+                                <input 
+                                    type="number"
+                                    value={totalXpTarget}
+                                    onChange={(e) => setTotalXpTarget(Number(e.target.value))}
+                                    className="bg-transparent font-black text-sky-600 text-sm w-full outline-none"
+                                />
                             </div>
                         </div>
                     </div>
@@ -244,6 +253,42 @@ const AddDream: React.FC<Props> = ({ onAdd, onBack }) => {
                             ))}
                         </div>
                     </div>
+
+                    {members && members.length > 0 && (
+                        <div className="space-y-3 pt-4 border-t border-slate-100">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Para quem é este Sonho? 👥</label>
+                            <div className="flex flex-wrap gap-3">
+                                {members.filter(m => m.role === 'child').map(member => (
+                                    <button
+                                        key={member.id}
+                                        onClick={() => {
+                                            setSelectedMemberIds(prev => 
+                                                prev.includes(member.id) 
+                                                    ? prev.filter(id => id !== member.id)
+                                                    : [...prev, member.id]
+                                            );
+                                        }}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${
+                                            selectedMemberIds.includes(member.id)
+                                                ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg scale-105'
+                                                : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                        }`}
+                                    >
+                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
+                                            {member.avatar ? (
+                                                <img src={member.avatar} className="w-full h-full object-cover" alt={member.name} />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-slate-300 text-[10px] text-white font-bold">
+                                                    {member.name[0]}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">{member.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <button 

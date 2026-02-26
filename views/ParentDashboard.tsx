@@ -30,7 +30,7 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                     </div>
                     <div>
                         <h1 className="text-lg font-black text-slate-800 leading-tight">Olá, {activeParent.name}</h1>
-                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Mentor do Reino</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Mentor dos Sonhos</p>
                     </div>
                 </div>
                 <button onClick={onLogout} className="text-slate-400 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 flex items-center gap-1 active:scale-90 transition-all">
@@ -67,7 +67,7 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                         <span className="material-symbols-outlined text-3xl font-black">map</span>
                     </div>
                     <div className="flex-1 text-left relative z-10">
-                        <h3 className="text-lg leading-none mb-1">Mapas do Reino</h3>
+                        <h3 className="text-lg leading-none mb-1">Mapas dos Sonhos</h3>
                         <p className="text-[10px] text-sky-200 uppercase tracking-widest font-black">Gerenciar Caminhos & Heróis</p>
                     </div>
                     <span className="absolute bottom-[-10px] right-[-10px] material-symbols-outlined text-8xl opacity-10 rotate-12">explore</span>
@@ -102,10 +102,44 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                 </div>
 
                 <section className="pt-2">
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">Jornadas dos Heróis</h2>
+                    <div className="space-y-4">
+                        {children.map(child => (
+                            <div key={child.id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <img src={child.avatar} className="w-8 h-8 rounded-full border-2 border-sky-100" alt={child.name} />
+                                    <span className="font-black text-xs text-slate-800 uppercase tracking-tight">{child.name}</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {child.dreams.filter(d => d.status === 'active').map(dream => (
+                                        <div key={dream.id} className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <span className="material-symbols-outlined text-sky-500">{dream.icon}</span>
+                                                <span className="text-[10px] font-black text-slate-700 uppercase truncate max-w-[120px]">{dream.title}</span>
+                                            </div>
+                                            <button 
+                                                onClick={() => onEditMap(dream.id)}
+                                                className="bg-sky-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-sky-600/20 active:scale-95 transition-all flex items-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined text-xs">edit_location</span>
+                                                Ajustar Mapa
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {child.dreams.filter(d => d.status === 'active').length === 0 && (
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase text-center py-2 italic">Nenhuma jornada ativa</p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="pt-2">
                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">Aprovações Pendentes ({allPendingTasks.length})</h2>
                     {allPendingTasks.length === 0 ? (
                         <div className="bg-white/50 rounded-[2.5rem] p-10 text-center border-2 border-dashed border-slate-200">
-                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Reino em Paz</p>
+                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Família em Paz</p>
                         </div>
                     ) : (
                         <div className="space-y-4">

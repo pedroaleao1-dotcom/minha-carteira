@@ -54,7 +54,7 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
             }
         } catch (error) {
             console.error("Erro ao gerar avatar:", error);
-            alert("O Reino está com muita neblina agora! Tente novamente em instantes.");
+            alert("O Mundo dos Sonhos está com muita neblina agora! Tente novamente em instantes.");
         } finally {
             setIsGenerating(false);
         }

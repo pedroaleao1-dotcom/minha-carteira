@@ -18,7 +18,7 @@ const ManageMembers: React.FC<Props> = ({ members, onEdit, onDelete, onAdd, onBa
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
                 <div className="text-center">
-                    <h1 className="text-lg font-black uppercase tracking-widest text-indigo-600">Gestão do Reino</h1>
+                    <h1 className="text-lg font-black uppercase tracking-widest text-indigo-600">Gestão da Família</h1>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Administrar Heróis & Mentores</p>
                 </div>
                 <button onClick={onAdd} className="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center active:scale-90 transition-all">
@@ -42,7 +42,7 @@ const ManageMembers: React.FC<Props> = ({ members, onEdit, onDelete, onAdd, onBa
                             <div className="flex-1 min-w-0">
                                 <h3 className="font-black text-slate-800 text-sm uppercase tracking-tighter truncate">{member.name}</h3>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {member.role === 'parent' ? 'Mentor do Reino' : `Herói Nível ${member.level}`}
+                                    {member.role === 'parent' ? 'Mentor dos Sonhos' : `Herói Nível ${member.level}`}
                                 </p>
                             </div>
 

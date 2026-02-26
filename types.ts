@@ -53,6 +53,7 @@ export interface DreamStep extends BaseEntity {
     isCompleted: boolean;
     orderIndex: number;
     xpReward: number;
+    coinReward: number;
     xPos: number;
     yPos: number;
     icon: string;
@@ -90,6 +91,7 @@ export interface Dream extends BaseEntity {
     status: 'active' | 'proposal';
     steps?: DreamStep[];
     templateId?: string; // ID do mapa global, se houver
+    totalXpTarget?: number;
 }
 
 export interface Task extends BaseEntity {

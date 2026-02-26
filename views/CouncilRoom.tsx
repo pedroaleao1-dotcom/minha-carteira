@@ -149,7 +149,7 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-amber-500 fill-1 text-xl animate-pulse">local_fire_department</span>
-                            <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Grande Forja Real</h2>
+                            <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Grande Forja de Sonhos</h2>
                         </div>
                         <button 
                             onClick={toggleCoinCreation}
@@ -218,7 +218,7 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
                                 </div>
 
                                 <div className="space-y-3 pt-2">
-                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Integrantes do Reino que receberão</label>
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Integrantes da Família que receberão</label>
                                     <div className="flex flex-wrap gap-4">
                                         {members.map(m => {
                                             const isSelected = selectedGrantees.includes(m.id);
