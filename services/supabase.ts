@@ -183,9 +183,8 @@ export const pullFromCloud = async () => {
             }));
             await db.storeItems.bulkPut(itemsToPut);
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error("Erro ao baixar dados:", e);
-        alert("Erro no pullFromCloud: " + (e?.message || JSON.stringify(e)));
     }
 };
 
