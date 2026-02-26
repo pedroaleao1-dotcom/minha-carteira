@@ -40,8 +40,8 @@ const ActivityCalendar: React.FC<Props> = React.memo(({ completions, onSelectDay
             </div>
 
             <div className="grid grid-cols-7 gap-2">
-                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
-                    <div key={d} className="text-center text-[8px] font-black text-slate-300 uppercase py-1">{d}</div>
+                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
+                    <div key={i} className="text-center text-[8px] font-black text-slate-300 uppercase py-1">{d}</div>
                 ))}
                 
                 {blanks.map(b => <div key={`b-${b}`} />)}

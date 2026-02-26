@@ -63,6 +63,7 @@ export interface Member extends BaseEntity {
     name: string;
     avatar: string;
     role: UserRole;
+    status?: 'active' | 'inactive';
     badge: string;
     level: number;
     xp: number;
