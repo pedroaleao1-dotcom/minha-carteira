@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface Props {
     memberToEdit?: Member | null;
-    onSave: (member: Omit<Member, 'id' | 'level' | 'xp' | 'coins' | 'dreams' | 'tasks' | 'achievements' | 'redemptions' | 'history' | 'notifications' | 'taskCompletions'>) => void;
+    onSave: (member: Omit<Member, 'id' | 'level' | 'xp' | 'coins' | 'dreams' | 'tasks' | 'achievements' | 'redemptions' | 'history' | 'notifications'>) => void;
     onBack: () => void;
 }
 
@@ -54,7 +54,7 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
             }
         } catch (error) {
             console.error("Erro ao gerar avatar:", error);
-            alert("O Reino está com muita neblina agora! Tente novamente em instantes.");
+            alert("O Mundo dos Sonhos está com muita neblina agora! Tente novamente em instantes.");
         } finally {
             setIsGenerating(false);
         }
@@ -63,12 +63,14 @@ const AddMember: React.FC<Props> = ({ memberToEdit, onSave, onBack }) => {
     const handleSave = () => {
         if (!name.trim()) return;
         
+        // Fix: Added updatedAt and taskCompletions to satisfy Member interface requirements
         onSave({
             name,
             role,
             avatar,
             badge: role === 'child' ? 'star' : 'settings',
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
+            taskCompletions: []
         });
     };
 

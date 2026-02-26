@@ -1,22 +1,15 @@
+
 -- ==========================================================
--- 🏰 DREAMQUEST KIDS - SCRIPT MESTRE DE CONFIGURAÇÃO (RELACIONAL)
+-- 🏰 DREAMQUEST KIDS - SCRIPT MESTRE DE CONFIGURAÇÃO
 -- Este script apaga tudo, cria as tabelas e popula com dados.
 -- Execute este bloco INTEIRO no SQL Editor do Supabase.
 -- ==========================================================
 
 -- 1. LIMPEZA TOTAL (Reset do Banco)
-DROP TABLE IF EXISTS redemptions CASCADE;
-DROP TABLE IF EXISTS transactions CASCADE;
-DROP TABLE IF EXISTS achievements CASCADE;
-DROP TABLE IF EXISTS task_completions CASCADE;
-DROP TABLE IF EXISTS tasks CASCADE;
-DROP TABLE IF EXISTS dream_steps CASCADE;
-DROP TABLE IF EXISTS dreams CASCADE;
 DROP TABLE IF EXISTS journey_template_steps CASCADE;
 DROP TABLE IF EXISTS journey_templates CASCADE;
 DROP TABLE IF EXISTS level_configs CASCADE;
 DROP TABLE IF EXISTS global_settings CASCADE;
-DROP TABLE IF EXISTS user_members CASCADE;
 DROP TABLE IF EXISTS store_item_assignments CASCADE;
 DROP TABLE IF EXISTS store_items CASCADE;
 DROP TABLE IF EXISTS members CASCADE;
@@ -33,7 +26,12 @@ CREATE TABLE members (
     level INTEGER DEFAULT 1,
     xp INTEGER DEFAULT 0,
     coins INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'active',
+    dreams JSONB DEFAULT '[]',
+    tasks JSONB DEFAULT '[]',
+    task_completions JSONB DEFAULT '[]',
+    achievements JSONB DEFAULT '[]',
+    redemptions JSONB DEFAULT '[]',
+    history JSONB DEFAULT '[]',
     notifications JSONB DEFAULT '{"tasks": true, "achievements": true}',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -53,108 +51,7 @@ CREATE TABLE store_items (
     price INTEGER NOT NULL,
     icon TEXT,
     color TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Atribuições de Itens da Loja para Heróis específicos (Tabela Associativa)
-CREATE TABLE store_item_assignments (
-    store_item_id TEXT REFERENCES store_items(id) ON DELETE CASCADE,
-    member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
-    PRIMARY KEY (store_item_id, member_id)
-);
-
--- Sonhos
-CREATE TABLE dreams (
-    id TEXT PRIMARY KEY,
-    member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    icon TEXT,
-    target_amount INTEGER NOT NULL,
-    current_amount INTEGER DEFAULT 0,
-    estimated_amount INTEGER,
-    image_url TEXT,
-    status TEXT DEFAULT 'active',
-    template_id TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Passos dos Sonhos
-CREATE TABLE dream_steps (
-    id TEXT PRIMARY KEY,
-    dream_id TEXT REFERENCES dreams(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    is_completed BOOLEAN DEFAULT false,
-    order_index INTEGER NOT NULL,
-    xp_reward INTEGER DEFAULT 0,
-    x_pos INTEGER NOT NULL,
-    y_pos INTEGER NOT NULL,
-    icon TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Tarefas
-CREATE TABLE tasks (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    reward INTEGER DEFAULT 0,
-    xp INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'todo',
-    icon TEXT,
-    frequency TEXT NOT NULL,
-    recurrence_text TEXT,
-    category TEXT NOT NULL,
-    proposal_image TEXT,
-    linked_dream_id TEXT REFERENCES dreams(id) ON DELETE SET NULL,
-    assigned_to JSONB DEFAULT '[]', -- Matido JSONB simplificado ou podemos ter uma associativa 'task_assignments'
-    last_completed_at BIGINT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Conclusões de Tarefas (Histórico de check-in)
-CREATE TABLE task_completions (
-    id TEXT PRIMARY KEY,
-    task_id TEXT, -- Não forcamos foreign key rigida caso a task seja apagada
-    member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
-    completed_at BIGINT NOT NULL,
-    task_title TEXT NOT NULL,
-    icon TEXT,
-    reward_coins INTEGER DEFAULT 0,
-    reward_xp INTEGER DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Conquistas (Badges)
-CREATE TABLE achievements (
-    id TEXT PRIMARY KEY,
-    member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    icon TEXT,
-    earned BOOLEAN DEFAULT true,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Histórico Financeiro (Transações)
-CREATE TABLE transactions (
-    id TEXT PRIMARY KEY,
-    member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    amount INTEGER NOT NULL,
-    icon TEXT,
-    timestamp BIGINT NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Loja: Resgates Feitos
-CREATE TABLE redemptions (
-    id TEXT PRIMARY KEY,
-    member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
-    item_id TEXT,
-    title TEXT NOT NULL,
-    icon TEXT,
-    status TEXT DEFAULT 'pending',
-    timestamp BIGINT NOT NULL,
+    assigned_to JSONB DEFAULT '[]',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -210,11 +107,11 @@ INSERT INTO level_configs (level_number, title, xp_required, coins_required, shi
 INSERT INTO global_settings (id, allow_coin_creation) VALUES ('main_settings', true);
 
 -- Prêmios na Loja
-INSERT INTO store_items (id, title, price, icon, color) VALUES
-('si_1', '15 min de Tablet', 40, 'tablet_android', 'bg-indigo-500'),
-('si_2', 'Escolher o Filme', 80, 'movie', 'bg-purple-500'),
-('si_3', 'Sorvete de Sobremesa', 120, 'icecream', 'bg-pink-500'),
-('si_4', 'Dormir 30min mais tarde', 150, 'bedtime', 'bg-blue-600');
+INSERT INTO store_items (id, title, price, icon, color, assigned_to) VALUES
+('si_1', '15 min de Tablet', 40, 'tablet_android', 'bg-indigo-500', '["hero_1", "hero_2", "hero_3"]'::jsonb),
+('si_2', 'Escolher o Filme', 80, 'movie', 'bg-purple-500', '["hero_1", "hero_2", "hero_3"]'::jsonb),
+('si_3', 'Sorvete de Sobremesa', 120, 'icecream', 'bg-pink-500', '["hero_1", "hero_3"]'::jsonb),
+('si_4', 'Dormir 30min mais tarde', 150, 'bedtime', 'bg-blue-600', '["hero_1", "hero_2"]'::jsonb);
 
 -- Modelos de Jornada
 INSERT INTO journey_templates (id, title, icon) VALUES ('temp_math', 'Desafio Matemático', 'calculate');
@@ -231,32 +128,20 @@ INSERT INTO members (id, name, avatar, role, badge) VALUES
 ('parent_1', 'Mestre Mentor', 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4', 'parent', 'settings');
 
 -- Herói 1: Arthur (Nível 2, Ativo)
-INSERT INTO members (id, name, avatar, role, badge, level, xp, coins) VALUES (
-    'hero_1', 'Arthur o Bravo', 'https://api.dicebear.com/7.x/adventurer/svg?seed=Arthur', 'child', 'star', 2, 650, 145
+INSERT INTO members (id, name, avatar, role, badge, level, xp, coins, dreams, tasks, history, task_completions) VALUES (
+    'hero_1', 'Arthur o Bravo', 'https://api.dicebear.com/7.x/adventurer/svg?seed=Arthur', 'child', 'star', 2, 650, 145,
+    '[{"id": "d1", "title": "LEGO Star Wars", "icon": "rocket_launch", "targetAmount": 1000, "currentAmount": 145, "status": "active"}]',
+    '[{"id": "t1", "title": "Arrumar a Cama", "reward": 10, "xp": 20, "status": "todo", "icon": "bed", "frequency": "daily", "category": "chore", "assignedTo": ["hero_1"]}]',
+    '[{"id": "tx1", "type": "reward", "title": "Missão: Ler Livro", "amount": 20, "icon": "menu_book", "timestamp": 1710000000000}]',
+    '[{"id": "tc1", "taskId": "old_1", "memberId": "hero_1", "completedAt": 1710000000000, "taskTitle": "Ler Livro", "icon": "menu_book", "rewardCoins": 20, "rewardXp": 40}]'
 );
-
-INSERT INTO dreams (id, member_id, title, icon, target_amount, current_amount, status) VALUES
-('d1', 'hero_1', 'LEGO Star Wars', 'rocket_launch', 1000, 145, 'active');
-
-INSERT INTO tasks (id, title, reward, xp, status, icon, frequency, category, assigned_to) VALUES
-('t1', 'Arrumar a Cama', 10, 20, 'todo', 'bed', 'daily', 'chore', '["hero_1"]'::jsonb);
-
-INSERT INTO transactions (id, member_id, type, title, amount, icon, timestamp) VALUES
-('tx1', 'hero_1', 'reward', 'Missão: Ler Livro', 20, 'menu_book', 1710000000000);
-
-INSERT INTO task_completions (id, task_id, member_id, completed_at, task_title, icon, reward_coins, reward_xp) VALUES
-('tc1', 'old_1', 'hero_1', 1710000000000, 'Ler Livro', 'menu_book', 20, 40);
 
 -- Herói 2: Alice (Nível 3, Focada em Estudos)
-INSERT INTO members (id, name, avatar, role, badge, level, xp, coins) VALUES (
-    'hero_2', 'Alice a Sábia', 'https://api.dicebear.com/7.x/adventurer/svg?seed=Alice', 'child', 'star', 3, 1600, 320
+INSERT INTO members (id, name, avatar, role, badge, level, xp, coins, dreams, tasks) VALUES (
+    'hero_2', 'Alice a Sábia', 'https://api.dicebear.com/7.x/adventurer/svg?seed=Alice', 'child', 'star', 3, 1600, 320,
+    '[{"id": "d2", "title": "Curso de Desenho", "icon": "brush", "targetAmount": 500, "currentAmount": 320, "status": "active"}]',
+    '[{"id": "t2", "title": "Estudar Inglês", "reward": 30, "xp": 60, "status": "todo", "icon": "translate", "frequency": "daily", "category": "study", "assignedTo": ["hero_2"]}]'
 );
-
-INSERT INTO dreams (id, member_id, title, icon, target_amount, current_amount, status) VALUES
-('d2', 'hero_2', 'Curso de Desenho', 'brush', 500, 320, 'active');
-
-INSERT INTO tasks (id, title, reward, xp, status, icon, frequency, category, assigned_to) VALUES
-('t2', 'Estudar Inglês', 30, 60, 'todo', 'translate', 'daily', 'study', '["hero_2"]'::jsonb);
 
 -- Herói 3: Bob (Nível 1, Iniciante)
 INSERT INTO members (id, name, avatar, role, badge, level, xp, coins) VALUES (

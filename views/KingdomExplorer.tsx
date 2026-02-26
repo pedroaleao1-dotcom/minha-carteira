@@ -36,8 +36,8 @@ const KingdomExplorer: React.FC<Props> = ({ member, onSelectTemplate, onBack }) 
                     <span className="material-symbols-outlined text-slate-400">arrow_back</span>
                 </button>
                 <div className="text-center">
-                    <h1 className="text-[10px] font-black text-sky-400 uppercase tracking-[0.3em]">Explorar o Reino</h1>
-                    <h2 className="text-sm font-black text-white uppercase tracking-tight">Reinos Mágicos</h2>
+                    <h1 className="text-[10px] font-black text-sky-400 uppercase tracking-[0.3em]">Explorar Sonhos</h1>
+                    <h2 className="text-sm font-black text-white uppercase tracking-tight">Sonhos Mágicos</h2>
                 </div>
                 <div className="w-12 h-12 flex flex-col items-center justify-center bg-sky-500/10 rounded-2xl border border-sky-500/20">
                     <span className="material-symbols-outlined text-sky-400 text-lg">bolt</span>
@@ -103,7 +103,7 @@ const KingdomExplorer: React.FC<Props> = ({ member, onSelectTemplate, onBack }) 
                                         </div>
 
                                         <div className="relative z-10 flex justify-between items-center bg-white/5 p-5 rounded-[2rem] border border-white/5 group-hover:bg-sky-500/20 transition-all group-hover:border-sky-500/30">
-                                            <span className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Acessar Reino</span>
+                                            <span className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Acessar Sonho</span>
                                             <div className="w-10 h-10 bg-sky-500/10 rounded-full flex items-center justify-center group-hover:bg-sky-500 group-hover:text-white transition-all">
                                                 <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                                             </div>

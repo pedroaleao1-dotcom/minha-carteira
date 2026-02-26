@@ -107,7 +107,7 @@ const RoleSelection: React.FC<Props> = ({ members, onSelect, onAddNew, isLoading
 
             {members.length === 0 && !isLoading && (
                 <div className="mt-8 text-center px-10">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O Reino está vazio! Toque em "Novo" para começar a aventura.</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">A Família está vazia! Toque em "Novo" para começar a aventura.</p>
                 </div>
             )}
 
