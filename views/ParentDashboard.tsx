@@ -6,6 +6,8 @@ interface Props {
     activeParent: Member;
     members: Member[];
     onApprove: (taskId: string) => void;
+    onApproveProposal?: (taskId: string, rewardCoins: number, rewardXp: number) => void;
+    onRejectProposal?: (taskId: string) => void;
     onLogout: () => void;
     onChangeProfile: () => void;
     onAddTask: () => void;
@@ -18,7 +20,47 @@ interface Props {
     onManageTemplates: () => void;
 }
 
-const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onLogout, onChangeProfile, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports, onManageMembers, onManageTemplates }) => {
+const ProposedTaskItem: React.FC<{ task: any, onApprove: (id: string, coins: number, xp: number) => void, onReject: (id: string) => void }> = ({ task, onApprove, onReject }) => {
+    const [coins, setCoins] = React.useState(10);
+    const [xp, setXp] = React.useState(10);
+
+    return (
+        <div className="bg-sky-50 rounded-[2rem] p-5 shadow-sm border border-sky-100 flex flex-col gap-4 animate-pop-in">
+            <div className="flex items-center gap-4">
+                <div className="relative w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-500 shrink-0">
+                    <span className="material-symbols-outlined">{task.icon}</span>
+                    <img src={task.memberAvatar} className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white bg-slate-100" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-slate-800 text-sm truncate">{task.title}</h3>
+                    <p className="text-[10px] text-sky-600 font-black uppercase">💡 Ideia de {task.memberName}</p>
+                </div>
+            </div>
+            
+            <div className="flex gap-4 items-center bg-white p-3 rounded-2xl">
+                <div className="flex-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Moedas (Ouro)</label>
+                    <input type="number" min="0" value={coins} onChange={(e) => setCoins(Number(e.target.value))} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-sm font-bold text-amber-500 text-center focus:outline-none focus:border-amber-300" />
+                </div>
+                <div className="flex-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">XP (Energia)</label>
+                    <input type="number" min="0" value={xp} onChange={(e) => setXp(Number(e.target.value))} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-sm font-bold text-sky-500 text-center focus:outline-none focus:border-sky-300" />
+                </div>
+            </div>
+
+            <div className="flex gap-2 mt-2">
+                <button onClick={() => onReject(task.id)} className="flex-1 bg-red-100 text-red-500 py-3 rounded-2xl font-black text-xs active-press flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-sm">close</span>REJEITAR
+                </button>
+                <button onClick={() => onApprove(task.id, coins, xp)} className="flex-[2] bg-sky-500 text-white py-3 rounded-2xl font-black text-xs active-press shadow-lg flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-sm">thumb_up</span>APROVAR
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, onApproveProposal, onRejectProposal, onLogout, onChangeProfile, onAddTask, onAddStoreItem, onOpenCouncil, onPlay, onEditMap, onOpenReports, onManageMembers, onManageTemplates }) => {
     const allPendingTasks = members.flatMap(m => m.tasks.filter(t => t.status === 'pending').map(t => ({ ...t, memberName: m.name, memberAvatar: m.avatar })));
     const children = members.filter(m => m.role === 'child');
 
@@ -116,23 +158,31 @@ const ParentDashboard: React.FC<Props> = ({ activeParent, members, onApprove, on
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {allPendingTasks.map(task => (
-                                <div key={task.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 flex flex-col gap-4 animate-pop-in">
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
-                                            <span className="material-symbols-outlined">{task.icon}</span>
-                                            <img src={task.memberAvatar} className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white bg-slate-100" />
+                            {allPendingTasks.map(task => {
+                                const isProposal = task.reward === 0 && task.xp === 0;
+                                
+                                if (isProposal) {
+                                    return <ProposedTaskItem key={task.id} task={task} onApprove={onApproveProposal!} onReject={onRejectProposal!} />;
+                                }
+
+                                return (
+                                    <div key={task.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 flex flex-col gap-4 animate-pop-in">
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
+                                                <span className="material-symbols-outlined">{task.icon}</span>
+                                                <img src={task.memberAvatar} className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white bg-slate-100" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-slate-800 text-sm truncate">{task.title}</h3>
+                                                <p className="text-[10px] text-amber-600 font-black uppercase">Prêmio: {task.reward} MOEDAS • {task.memberName}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-slate-800 text-sm truncate">{task.title}</h3>
-                                            <p className="text-[10px] text-amber-600 font-black uppercase">Prêmio: {task.reward} MOEDAS • {task.memberName}</p>
-                                        </div>
+                                        <button onClick={() => onApprove(task.id)} className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs active-press shadow-lg flex items-center justify-center gap-2">
+                                            <span className="material-symbols-outlined text-sm">check_circle</span>APROVAR
+                                        </button>
                                     </div>
-                                    <button onClick={() => onApprove(task.id)} className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs active-press shadow-lg flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined text-sm">check_circle</span>APROVAR
-                                    </button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </section>

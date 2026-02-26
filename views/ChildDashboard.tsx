@@ -12,9 +12,19 @@ interface Props {
 }
 
 const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLogout, onChangeProfile }) => {
-    // Busca TODAS as tarefas pendentes do herói
+    // Puxa as tarefas pendentes
     const activeTasks = child.tasks.filter(t => t.status === 'todo');
+    
+    // Identifica o Sonho Ativo (ex: o primeiro que não foi concluído e tem maior prioridade)
+    // Aqui usamos uma lógica simples: pega o primeiro sonho ativo que tem progresso > 0, ou pega o primeiro sonho da lista
     const activeDreams = child.dreams.filter(d => d.status === 'active');
+    const mainDream = activeDreams.find(d => d.currentAmount > 0) || activeDreams[0];
+
+    // Identifica o Reino Ativo (qualquer sonho que esteja atrelado a um template/mapa de jornada)
+    const activeJourneyDream = activeDreams.find(d => d.templateId);
+    
+    // Calcula progresso se houver sonho
+    const dreamProgress = mainDream ? Math.min(100, Math.round((mainDream.currentAmount / mainDream.targetAmount) * 100)) : 0;
 
     return (
         <div className="flex-1 flex flex-col p-6 pb-24 bg-slate-50 min-h-screen">
@@ -66,41 +76,93 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLog
                 </div>
             </header>
 
-            {/* Menu Principal de Herói (Grid) */}
-            <section className="grid grid-cols-2 gap-4 mb-8">
-                <button 
-                    onClick={() => onNavigate('kingdom_explorer')}
-                    className="col-span-2 h-32 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-[2.5rem] p-6 text-white relative overflow-hidden shadow-2xl active:scale-95 transition-all group"
-                >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 transform -rotate-12 group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-[120px]">explore</span>
-                    </div>
-                    <div className="relative z-10 flex flex-col justify-center h-full">
-                        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-1">Explorar</h2>
-                        <h3 className="text-2xl font-black">Reinos Mágicos</h3>
-                    </div>
-                    <span className="absolute bottom-6 right-6 material-symbols-outlined text-3xl animate-float">travel_explore</span>
-                </button>
+            {/* Cards Vivos de Progresso */}
+            <section className="flex flex-col gap-4 mb-8">
+                
+                {/* 1. O Sonho Ativo (Se Houver) */}
+                {mainDream ? (
+                    <button 
+                        onClick={() => onNavigate('dream_gallery')}
+                        className="w-full bg-white rounded-[2.5rem] p-6 shadow-xl border-2 border-slate-50 text-left active:scale-[0.98] transition-all group overflow-hidden relative"
+                    >
+                        {/* Fundo Decorativo */}
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-emerald-500/10 transition-colors"></div>
+                        
+                        <div className="flex items-start justify-between relative z-10 mb-4">
+                            <div>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <span className="material-symbols-outlined text-[10px] text-emerald-500">star</span>
+                                    <h2 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Seu Maior Sonho</h2>
+                                </div>
+                                <h3 className="text-xl font-black text-slate-800 leading-tight">{mainDream.title}</h3>
+                            </div>
+                            <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:rotate-6 transition-transform">
+                                <span className="material-symbols-outlined text-3xl font-black">{mainDream.icon}</span>
+                            </div>
+                        </div>
 
-                <button 
-                    onClick={() => onNavigate('tasks')}
-                    className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:scale-95 transition-all"
-                >
-                    <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
-                        <span className="material-symbols-outlined text-3xl">task_alt</span>
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Missões</span>
-                </button>
+                        <div className="relative z-10">
+                            <div className="flex justify-between items-end mb-2">
+                                <div className="flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-sm text-amber-500 fill-1">monetization_on</span>
+                                    <span className="font-black text-slate-700">{mainDream.currentAmount}</span>
+                                    <span className="text-[10px] font-bold text-slate-400">/ {mainDream.targetAmount}</span>
+                                </div>
+                                <span className="text-[10px] font-black text-emerald-500">{dreamProgress}%</span>
+                            </div>
+                            <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                                <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${dreamProgress}%` }}></div>
+                            </div>
+                        </div>
+                    </button>
+                ) : (
+                    <button 
+                        onClick={() => onNavigate('dream_gallery')}
+                        className="w-full bg-slate-100/50 rounded-[2.5rem] p-6 border-4 border-dashed border-slate-200 text-center active:scale-[0.98] transition-all"
+                    >
+                        <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">add_task</span>
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Definir um Sonho</h3>
+                    </button>
+                )}
 
-                <button 
-                    onClick={() => onNavigate('dream_gallery')}
-                    className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:scale-95 transition-all"
-                >
-                    <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
-                        <span className="material-symbols-outlined text-3xl">cloud_done</span>
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Sonhos</span>
-                </button>
+                {/* 2. Reinos / Aventuras (XP) */}
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={() => onNavigate('kingdom_explorer')}
+                        className={`bg-gradient-to-br ${activeJourneyDream ? 'from-sky-500 to-indigo-600 text-white' : 'from-slate-800 to-slate-900 text-white'} rounded-[2.5rem] p-5 shadow-lg active:scale-95 transition-all relative overflow-hidden group`}
+                    >
+                        <div className="absolute -top-4 -right-4 text-white/5 group-hover:scale-125 transition-transform duration-500 transform rotate-12">
+                            <span className="material-symbols-outlined text-8xl">explore</span>
+                        </div>
+                        <div className="relative z-10 flex flex-col items-start text-left h-full justify-between">
+                            <h2 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">
+                                {activeJourneyDream ? 'Jornada Atual' : 'Reinos Mágicos'}
+                            </h2>
+                            <div>
+                                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-2">
+                                    <span className="material-symbols-outlined text-2xl">{activeJourneyDream ? 'map' : 'travel_explore'}</span>
+                                </div>
+                                <h3 className="font-black leading-tight text-sm">
+                                    {activeJourneyDream ? activeJourneyDream.title : 'Explorar Mapa'}
+                                </h3>
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Botão de Missões (Fallback para lista de missões completas) */}
+                    <button 
+                        onClick={() => onNavigate('tasks')}
+                        className="bg-white p-5 rounded-[2.5rem] shadow-sm border border-slate-100 active:scale-95 transition-all flex flex-col justify-between items-start text-left"
+                    >
+                        <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Histórico</h2>
+                        <div>
+                            <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mb-2">
+                                <span className="material-symbols-outlined text-2xl">task_alt</span>
+                            </div>
+                            <h3 className="font-black text-slate-800 text-sm">Ver Todas<br/>as Missões</h3>
+                        </div>
+                    </button>
+                </div>
             </section>
 
             {/* Treinamento de Hoje (Tasks Rápidas) */}

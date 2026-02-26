@@ -253,6 +253,28 @@ const App: React.FC = () => {
         }));
     };
 
+    const approveTaskProposal = async (taskId: string, rewardCoins: number, rewardXp: number) => {
+        const memberToUpdate = members.find(m => m.tasks.some(t => t.id === taskId && t.status === 'pending'));
+        if (!memberToUpdate) return;
+        
+        await updateMemberById(memberToUpdate.id, m => ({
+            ...m,
+            tasks: m.tasks.map(t => t.id === taskId ? { ...t, status: 'todo', reward: rewardCoins, xp: rewardXp } : t)
+        }));
+    };
+
+    const rejectTaskProposal = async (taskId: string) => {
+        const memberToUpdate = members.find(m => m.tasks.some(t => t.id === taskId && t.status === 'pending'));
+        if (!memberToUpdate) return;
+        
+        if (!confirm("Rejeitar e excluir esta proposta de missão?")) return;
+
+        await updateMemberById(memberToUpdate.id, m => ({
+            ...m,
+            tasks: m.tasks.filter(t => t.id !== taskId)
+        }));
+    };
+
     const renderView = () => {
         // Seção Não Autenticada
         if (!user && !isLoading) {
@@ -278,7 +300,7 @@ const App: React.FC = () => {
                 if (!activeMember) return null;
                 switch (view) {
                     case 'child_dash': return <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={handleLogout} onChangeProfile={() => setView('role')} />;
-                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={activeMembers} onApprove={approveTask} onLogout={handleLogout} onChangeProfile={() => setView('role')} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onOpenReports={() => setView('reports')} onManageMembers={() => setView('manage_members')} onManageTemplates={() => setView('manage_templates')} />;
+                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={activeMembers} onApprove={approveTask} onApproveProposal={approveTaskProposal} onRejectProposal={rejectTaskProposal} onLogout={handleLogout} onChangeProfile={() => setView('role')} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onOpenReports={() => setView('reports')} onManageMembers={() => setView('manage_members')} onManageTemplates={() => setView('manage_templates')} />;
                     case 'reports': return <Reports members={activeMembers.filter(m => m.role === 'child')} onBack={() => setView('parent_dash')} />;
                     case 'kingdom_explorer': return <KingdomExplorer member={activeMember} onSelectTemplate={startJourneyFromTemplate} onBack={() => setView('child_dash')} />;
                     case 'request_mission': return <RequestMission onPropose={(prop) => { updateMemberById(activeMember.id, m => ({ ...m, tasks: [...m.tasks, { ...prop, id: Math.random().toString(36).substr(2, 9), reward: 0, xp: 0, status: 'pending', frequency: 'once', category: 'chore', assignedTo: [activeMember.id], updatedAt: Date.now() } as any] })); setView('child_dash'); }} onBack={() => setView('child_dash')} />;
