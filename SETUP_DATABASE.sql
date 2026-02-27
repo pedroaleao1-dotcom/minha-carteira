@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS level_configs CASCADE;
 DROP TABLE IF EXISTS global_settings CASCADE;
 DROP TABLE IF EXISTS store_item_assignments CASCADE;
 DROP TABLE IF EXISTS store_items CASCADE;
+DROP TABLE IF EXISTS user_members CASCADE;
 DROP TABLE IF EXISTS members CASCADE;
 
 -- 2. CRIAÇÃO DAS TABELAS
@@ -41,6 +42,13 @@ CREATE TABLE user_members (
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     member_id TEXT REFERENCES members(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, member_id)
+);
+
+-- Atribuições de Itens da Loja
+CREATE TABLE store_item_assignments (
+    store_item_id TEXT NOT NULL,
+    member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    PRIMARY KEY (store_item_id, member_id)
 );
 
 
