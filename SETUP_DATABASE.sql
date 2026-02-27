@@ -1,3 +1,89 @@
+
+-- ==========================================================
+-- 🏰 DREAMQUEST KIDS - SCRIPT MESTRE DE CONFIGURAÇÃO
+-- Este script apaga tudo, cria as tabelas e popula com dados.
+-- Execute este bloco INTEIRO no SQL Editor do Supabase.
+-- ==========================================================
+
+-- 1. LIMPEZA TOTAL (Reset do Banco)
+DROP TABLE IF EXISTS journey_template_steps CASCADE;
+DROP TABLE IF EXISTS journey_templates CASCADE;
+DROP TABLE IF EXISTS level_configs CASCADE;
+DROP TABLE IF EXISTS global_settings CASCADE;
+DROP TABLE IF EXISTS store_items CASCADE;
+DROP TABLE IF EXISTS members CASCADE;
+
+-- 2. CRIAÇÃO DAS TABELAS
+
+-- Membros (Heróis e Mentores)
+CREATE TABLE members (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    avatar TEXT,
+    role TEXT NOT NULL,
+    badge TEXT,
+    level INTEGER DEFAULT 1,
+    xp INTEGER DEFAULT 0,
+    coins INTEGER DEFAULT 0,
+    dreams JSONB DEFAULT '[]',
+    tasks JSONB DEFAULT '[]',
+    task_completions JSONB DEFAULT '[]',
+    achievements JSONB DEFAULT '[]',
+    redemptions JSONB DEFAULT '[]',
+    history JSONB DEFAULT '[]',
+    notifications JSONB DEFAULT '{"tasks": true, "achievements": true}',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Loja do Reino
+CREATE TABLE store_items (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    price INTEGER NOT NULL,
+    icon TEXT,
+    color TEXT,
+    assigned_to JSONB DEFAULT '[]',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Configurações Gerais
+CREATE TABLE global_settings (
+    id TEXT PRIMARY KEY DEFAULT 'main_settings',
+    allow_coin_creation BOOLEAN DEFAULT true,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Configuração de Níveis
+CREATE TABLE level_configs (
+    level_number INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    xp_required INTEGER NOT NULL,
+    coins_required INTEGER NOT NULL,
+    shield_icon TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Modelos de Mapas
+CREATE TABLE journey_templates (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    icon TEXT DEFAULT 'map',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Passos dos Mapas
+CREATE TABLE journey_template_steps (
+    id TEXT PRIMARY KEY,
+    template_id TEXT REFERENCES journey_templates(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    order_index INTEGER NOT NULL,
+    xp_reward INTEGER DEFAULT 50,
+    x_pos INTEGER NOT NULL,
+    y_pos INTEGER NOT NULL,
+    icon TEXT DEFAULT 'star',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 3. POPULAÇÃO DE DADOS (SEED)
 
 -- Níveis
@@ -52,10 +138,3 @@ INSERT INTO members (id, name, avatar, role, badge, level, xp, coins, dreams, ta
 INSERT INTO members (id, name, avatar, role, badge, level, xp, coins) VALUES (
     'hero_3', 'Pequeno Bob', 'https://api.dicebear.com/7.x/adventurer/svg?seed=Bob', 'child', 'star', 1, 50, 10
 );
-
--- Atribuição de Itens da Loja para os recém criados membros
-INSERT INTO store_item_assignments (store_item_id, member_id) VALUES
-('si_1', 'hero_1'), ('si_1', 'hero_2'), ('si_1', 'hero_3'),
-('si_2', 'hero_1'), ('si_2', 'hero_2'), ('si_2', 'hero_3'),
-('si_3', 'hero_1'), ('si_3', 'hero_2'), ('si_3', 'hero_3'),
-('si_4', 'hero_1'), ('si_4', 'hero_2'), ('si_4', 'hero_3');

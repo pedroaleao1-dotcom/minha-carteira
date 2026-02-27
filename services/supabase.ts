@@ -66,8 +66,9 @@
  *     title TEXT NOT NULL,
  *     order_index INTEGER NOT NULL,
  *     xp_reward INTEGER DEFAULT 50,
- *     x_pos INTEGER NOT NULL,
- *     y_pos INTEGER NOT NULL,
+ *     coin_reward INTEGER DEFAULT 0,
+ *     x_pos NUMERIC NOT NULL,
+ *     y_pos NUMERIC NOT NULL,
  *     icon TEXT DEFAULT 'star',
  *     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
  * );
@@ -183,6 +184,12 @@ export const pullFromCloud = async () => {
             }));
             await db.storeItems.bulkPut(itemsToPut);
         }
+
+        // --- SYNC TEMPLATES ---
+        const templates = await fetchJourneyTemplates();
+        if (templates.length > 0) {
+            await db.journeyTemplates.bulkPut(templates);
+        }
     } catch (e) {
         console.error("Erro ao baixar dados:", e);
     }
@@ -271,15 +278,21 @@ export const deleteLevelConfig = async (lvl: number) => {
 
 export const pushJourneyTemplate = async (template: JourneyTemplate) => {
     try {
-        await supabase.from('journey_templates').upsert({
+        // 1. Upsert the template
+        const { error: tError } = await supabase.from('journey_templates').upsert({
             id: template.id,
             title: template.title,
             icon: template.icon,
             updated_at: new Date(template.updatedAt).toISOString()
         });
+        if (tError) throw tError;
 
+        // 2. Delete existing steps to avoid orphans and duplicates
+        await supabase.from('journey_template_steps').delete().eq('template_id', template.id);
+
+        // 3. Insert new steps
         if (template.steps.length > 0) {
-            await supabase.from('journey_template_steps').upsert(template.steps.map(s => ({
+            const { error: sError } = await supabase.from('journey_template_steps').insert(template.steps.map(s => ({
                 id: s.id,
                 template_id: template.id,
                 title: s.title,
@@ -291,7 +304,12 @@ export const pushJourneyTemplate = async (template: JourneyTemplate) => {
                 icon: s.icon,
                 updated_at: new Date(s.updatedAt).toISOString()
             })));
+            if (sError) throw sError;
         }
+
+        // 4. Update local Dexie
+        await db.journeyTemplates.put(template);
+        
         return true;
     } catch (e) {
         console.error("Erro ao subir template:", e);
@@ -300,31 +318,44 @@ export const pushJourneyTemplate = async (template: JourneyTemplate) => {
 };
 
 export const fetchJourneyTemplates = async (): Promise<JourneyTemplate[]> => {
-    const { data, error } = await supabase.from('journey_templates').select(`
-        *,
-        journey_template_steps (*)
-    `);
+    try {
+        const { data, error } = await supabase.from('journey_templates').select(`
+            *,
+            journey_template_steps (*)
+        `);
 
-    if (error || !data) return [];
+        if (error) throw error;
+        if (!data) return await db.journeyTemplates.toArray();
 
-    return data.map(t => ({
-        id: t.id,
-        title: t.title,
-        icon: t.icon,
-        updatedAt: new Date(t.updated_at).getTime(),
-        steps: (t.journey_template_steps || []).map((s: any) => ({
-            id: s.id,
-            title: s.title,
-            isCompleted: false,
-            orderIndex: s.order_index,
-            xpReward: s.xp_reward,
-            coinReward: s.coin_reward || 0,
-            xPos: s.x_pos,
-            y_pos: s.y_pos,
-            icon: s.icon,
-            updatedAt: new Date(s.updated_at).getTime()
-        })).sort((a: any, b: any) => a.orderIndex - b.orderIndex)
-    }));
+        const templates = data.map(t => ({
+            id: t.id,
+            title: t.title,
+            icon: t.icon,
+            updatedAt: new Date(t.updated_at).getTime(),
+            steps: (t.journey_template_steps || []).map((s: any) => ({
+                id: s.id,
+                title: s.title,
+                isCompleted: false,
+                orderIndex: s.order_index,
+                xpReward: s.xp_reward,
+                coin_reward: s.coin_reward || 0,
+                xPos: s.x_pos,
+                y_pos: s.y_pos,
+                icon: s.icon,
+                updatedAt: new Date(s.updated_at).getTime()
+            })).sort((a: any, b: any) => a.orderIndex - b.orderIndex)
+        }));
+
+        // Update local Dexie with fetched templates
+        if (templates.length > 0) {
+            await db.journeyTemplates.bulkPut(templates);
+        }
+
+        return templates;
+    } catch (e) {
+        console.error("Erro ao buscar templates do Supabase, tentando local:", e);
+        return await db.journeyTemplates.toArray();
+    }
 };
 
 export const deleteJourneyTemplate = async (id: string) => {
