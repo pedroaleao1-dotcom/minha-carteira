@@ -251,6 +251,63 @@ const App: React.FC = () => {
         }));
     };
 
+    const completeDreamStep = async (memberId: string, dreamId: string, stepId: string) => {
+        const member = members.find(m => m.id === memberId);
+        if (!member) return;
+        const dream = member.dreams.find(d => d.id === dreamId);
+        if (!dream || !dream.steps) return;
+        const step = dream.steps.find(s => s.id === stepId);
+        if (!step || step.isCompleted) return;
+
+        const now = Date.now();
+        await updateMemberById(memberId, m => ({
+            ...m,
+            xp: m.xp + step.xpReward,
+            coins: m.coins + (step.coinReward || 0),
+            dreams: m.dreams.map(d => d.id === dreamId ? {
+                ...d,
+                currentAmount: d.currentAmount + (step.coinReward || 0),
+                steps: d.steps?.map(s => s.id === stepId ? { ...s, isCompleted: true, updatedAt: now } : s)
+            } : d),
+            history: [
+                { 
+                    id: `tx-dream-${now}`, 
+                    type: 'reward', 
+                    title: `Passo Concluído: ${step.title}`, 
+                    amount: step.coinReward || 0, 
+                    icon: step.icon, 
+                    timestamp: now, 
+                    updatedAt: now 
+                }, 
+                ...m.history
+            ]
+        }));
+    };
+
+    const applyTemplateToMember = async (template: JourneyTemplate, memberId: string) => {
+        const targetMember = members.find(m => m.id === memberId);
+        if (!targetMember) return;
+
+        const newDream: Dream = {
+            id: Math.random().toString(36).substr(2, 9),
+            title: template.title,
+            icon: template.icon,
+            targetAmount: template.steps.length * 100,
+            currentAmount: 0,
+            status: 'active',
+            templateId: template.id,
+            steps: template.steps.map(s => ({ ...s, isCompleted: false })),
+            updatedAt: Date.now()
+        };
+
+        await updateMemberById(memberId, m => ({
+            ...m,
+            dreams: [...m.dreams, newDream]
+        }));
+        
+        alert(`Mapa "${template.title}" atribuído com sucesso para ${targetMember.name}!`);
+    };
+
     const renderView = () => {
         const activeMembers = members.filter(m => m.status !== 'inactive');
         

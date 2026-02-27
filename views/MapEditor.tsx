@@ -210,58 +210,58 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
     }, [selectedStepId]);
 
     return (
-        <div className="flex-1 flex flex-col bg-[#020617] min-h-screen text-white overflow-hidden font-sans">
-            <header className="p-6 flex items-center justify-between border-b border-white/5 bg-slate-900/40 backdrop-blur-xl z-50">
-                <button onClick={onBack} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 active:scale-90 transition-all">
-                    <span className="material-symbols-outlined text-slate-400">close</span>
+        <div className="flex-1 flex flex-col bg-slate-50 min-h-screen text-slate-800 overflow-hidden font-sans">
+            <header className="p-6 flex items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-xl z-[80]">
+                <button onClick={onBack} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 active:scale-90 transition-all">
+                    <span className="material-symbols-outlined text-slate-400">arrow_back</span>
                 </button>
                 <div className="flex-1 mx-6">
                     <input 
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="bg-transparent border-b-2 border-white/5 text-center font-black uppercase text-sky-400 tracking-[0.2em] text-lg outline-none focus:border-sky-500 w-full transition-all"
+                        className="bg-transparent border-b-2 border-slate-200 text-center font-black uppercase text-slate-800 tracking-[0.2em] text-lg outline-none focus:border-sky-500 w-full transition-all"
                         placeholder="NOME DO SONHO"
                     />
                 </div>
                 <div className="flex gap-3 relative">
                     <button 
                         onClick={() => setShowAIPanel(!showAIPanel)}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${showAIPanel ? 'bg-pink-500 text-white border-pink-400' : 'bg-pink-500/10 text-pink-500 border-pink-500/20'}`}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${showAIPanel ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/20' : 'bg-pink-50 text-pink-500 border-pink-100'}`}
                         title="Gerar com IA"
                     >
                         <span className="material-symbols-outlined fill-1">magic_button</span>
                     </button>
                     
                     {showAIPanel && (
-                        <div className="absolute top-16 right-0 w-80 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl z-[60] animate-pop-in">
-                            <h4 className="text-[10px] font-black uppercase text-pink-400 tracking-[0.2em] mb-4">Gerador de Jornada</h4>
+                        <div className="absolute top-16 right-0 w-80 bg-white/95 backdrop-blur-2xl border border-slate-100 rounded-3xl p-6 shadow-2xl z-[90] animate-pop-in">
+                            <h4 className="text-[10px] font-black uppercase text-pink-500 tracking-[0.2em] mb-4">Gerador de Jornada</h4>
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Tema (Opcional)</label>
+                                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Tema (Opcional)</label>
                                     <input 
                                         value={theme}
                                         onChange={(e) => setTheme(e.target.value)}
                                         placeholder="Ex: Espaço, Piratas, Doces..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-pink-500 transition-all"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-pink-500 transition-all placeholder:text-slate-300"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-2">
-                                        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Total Moedas</label>
+                                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Moedas</label>
                                         <input 
                                             type="number"
                                             value={targetCoins}
                                             onChange={(e) => setTargetCoins(Number(e.target.value))}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-pink-500 transition-all"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-pink-500 transition-all"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Total XP</label>
+                                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Total XP</label>
                                         <input 
                                             type="number"
                                             value={targetXp}
                                             onChange={(e) => setTargetXp(Number(e.target.value))}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-pink-500 transition-all"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-pink-500 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -294,17 +294,17 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
             <div className="flex-1 relative flex flex-col">
                 {/* Dica de Uso */}
                 <div className="fixed top-24 left-0 right-0 z-[60] pointer-events-none flex justify-center px-6">
-                    <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 px-6 py-2 rounded-full flex items-center gap-3 shadow-2xl">
+                    <div className="bg-white/90 backdrop-blur-md border border-slate-200 px-6 py-2 rounded-full flex items-center gap-3 shadow-sm">
                         <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full animate-pulse ${activeTool === 'move' ? 'bg-sky-500' : 'bg-slate-600'}`}></span>
-                            <span className={`text-[8px] font-black uppercase tracking-widest ${activeTool === 'move' ? 'text-sky-400' : 'text-slate-500'}`}>
+                            <span className={`w-2 h-2 rounded-full animate-pulse ${activeTool === 'move' ? 'bg-sky-500' : 'bg-slate-300'}`}></span>
+                            <span className={`text-[8px] font-black uppercase tracking-widest ${activeTool === 'move' ? 'text-sky-500' : 'text-slate-400'}`}>
                                 {activeTool === 'move' ? 'Modo Movimento Ativo' : 'Selecione Mover para ajustar'}
                             </span>
                         </div>
-                        <div className="w-px h-3 bg-white/10"></div>
+                        <div className="w-px h-3 bg-slate-200"></div>
                         <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full animate-pulse ${activeTool === 'edit' ? 'bg-emerald-500' : 'bg-slate-600'}`}></span>
-                            <span className={`text-[8px] font-black uppercase tracking-widest ${activeTool === 'edit' ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            <span className={`w-2 h-2 rounded-full animate-pulse ${activeTool === 'edit' ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                            <span className={`text-[8px] font-black uppercase tracking-widest ${activeTool === 'edit' ? 'text-emerald-500' : 'text-slate-400'}`}>
                                 {activeTool === 'edit' ? 'Modo Edição Ativo' : 'Selecione Editar para configurar'}
                             </span>
                         </div>
@@ -312,25 +312,25 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                 </div>
 
                 {/* Toolbar Lateral de Ferramentas */}
-                <div className={`fixed left-6 transition-all duration-500 z-[100] pointer-events-auto flex flex-col gap-3 ${selectedStep && !isDragging ? 'bottom-[420px]' : 'bottom-10'}`}>
+                <div className={`fixed left-6 transition-all duration-500 z-[100] pointer-events-auto flex flex-col gap-3 ${selectedStep && !isDragging ? 'bottom-[450px]' : 'bottom-10'}`}>
                     <button 
                         onPointerDown={(e) => { e.stopPropagation(); setActiveTool('edit'); setDraggedStepId(null); }}
-                        className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-all border ${activeTool === 'edit' ? 'bg-emerald-500 text-white border-emerald-400 scale-110' : 'bg-slate-900/95 text-slate-400 border-white/10 hover:bg-slate-800'}`}
+                        className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shadow-lg transition-all border ${activeTool === 'edit' ? 'bg-emerald-500 text-white border-emerald-400 scale-110' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50 hover:text-slate-600'}`}
                     >
                         <span className="material-symbols-outlined text-lg">edit</span>
                         <span className="text-[5px] font-black uppercase tracking-tighter mt-0.5">Editar</span>
                     </button>
                     <button 
                         onPointerDown={(e) => { e.stopPropagation(); setActiveTool('move'); setSelectedStepId(null); }}
-                        className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-all border ${activeTool === 'move' ? 'bg-sky-500 text-white border-sky-400 scale-110' : 'bg-slate-900/95 text-slate-400 border-white/10 hover:bg-slate-800'}`}
+                        className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shadow-lg transition-all border ${activeTool === 'move' ? 'bg-sky-500 text-white border-sky-400 scale-110' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50 hover:text-slate-600'}`}
                     >
                         <span className="material-symbols-outlined text-lg">open_with</span>
                         <span className="text-[5px] font-black uppercase tracking-tighter mt-0.5">Mover</span>
                     </button>
-                    <div className="w-full h-px bg-white/10 my-0.5"></div>
+                    <div className="w-full h-px bg-slate-200 my-0.5"></div>
                     <button 
                         onPointerDown={(e) => { e.stopPropagation(); autoOrganize(); }}
-                        className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center bg-slate-900/95 text-amber-500 border border-white/10 shadow-2xl hover:bg-slate-800 active:scale-90 transition-all"
+                        className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center bg-white text-amber-500 border border-slate-200 shadow-lg hover:bg-slate-50 hover:text-amber-600 active:scale-90 transition-all"
                         title="Organizar Automaticamente"
                     >
                         <span className="material-symbols-outlined text-lg">auto_fix_high</span>
@@ -338,7 +338,7 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                     </button>
                     <button 
                         onPointerDown={(e) => { e.stopPropagation(); addNewStep(); }}
-                        className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center bg-slate-900/95 text-sky-500 border border-white/10 shadow-2xl hover:bg-slate-800 active:scale-90 transition-all"
+                        className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center bg-white text-sky-500 border border-slate-200 shadow-lg hover:bg-slate-50 hover:text-sky-600 active:scale-90 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">add_location_alt</span>
                         <span className="text-[5px] font-black uppercase tracking-tighter mt-0.5">Novo</span>
@@ -346,35 +346,35 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                 </div>
 
                 {/* Canvas do Mapa */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#020617] relative">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 relative">
                     <div 
                         ref={canvasRef}
                         onPointerMove={handlePointerMove}
-                        className="relative cursor-default bg-[#020617] min-h-[1500px] w-full"
+                        className="relative cursor-default bg-slate-50 min-h-[1500px] w-full"
                         style={{ 
                             backgroundImage: `
-                                radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0),
-                                linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px), 
-                                linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px)
+                                radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0),
+                                linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px), 
+                                linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px)
                             `,
                             backgroundSize: '40px 40px, 80px 80px, 80px 80px'
                         }}
                     >
                         {/* Borda de Visão do Mapa */}
-                        <div className="absolute inset-4 border-2 border-white/5 rounded-[3rem] pointer-events-none z-0"></div>
+                        <div className="absolute inset-4 border-2 border-slate-200 rounded-[3rem] pointer-events-none z-0"></div>
                         
                         {/* Brilhos de Fundo */}
-                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-                        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-                        <div className="absolute top-3/4 left-1/3 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-200/40 rounded-full blur-[100px] pointer-events-none"></div>
+                        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-200/40 rounded-full blur-[100px] pointer-events-none"></div>
+                        <div className="absolute top-3/4 left-1/3 w-96 h-96 bg-indigo-200/40 rounded-full blur-[100px] pointer-events-none"></div>
 
                         {/* Linhas Conectoras */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
                             <defs>
                                 <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.1" />
-                                    <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.4" />
-                                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.1" />
+                                    <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.4" />
+                                    <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.7" />
+                                    <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.4" />
                                 </linearGradient>
                             </defs>
                             {steps.length > 1 && [...steps].sort((a,b) => a.orderIndex - b.orderIndex).map((step, i) => {
@@ -411,21 +411,21 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                                 onPointerUp={(e) => handlePointerUp(e, step.id)}
                             >
                                 <div className={`
-                                    w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl border-4 transition-all duration-300
+                                    w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-lg border-4 transition-all duration-300
                                     ${selectedStepId === step.id 
                                         ? 'bg-sky-500 border-white shadow-sky-500/40 rotate-12' 
-                                        : 'bg-slate-900 border-white/10 hover:border-sky-500/50'}
+                                        : 'bg-white border-slate-100 hover:border-sky-300'}
                                 `}>
-                                    <span className={`material-symbols-outlined text-3xl font-black ${selectedStepId === step.id ? 'text-white' : 'text-slate-500'}`}>
+                                    <span className={`material-symbols-outlined text-3xl font-black ${selectedStepId === step.id ? 'text-white' : 'text-slate-400'}`}>
                                         {step.icon}
                                     </span>
                                     
                                     {/* Badge de Ordem */}
-                                    <div className="absolute -top-2 -left-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-sky-500">
+                                    <div className="absolute -top-2 -left-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-sky-500">
                                         <span className="text-[10px] font-black text-sky-600">{step.orderIndex + 1}</span>
                                     </div>
                                 </div>
-                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-white/10 shadow-xl">
+                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-500 shadow-sm border border-slate-200">
                                     {step.title}
                                 </div>
                             </div>
@@ -435,65 +435,65 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
 
                 {/* Painel de Edição (Somente se selecionado) */}
                 {selectedStep && !isDragging && (
-                    <div className="fixed bottom-6 left-6 right-6 bg-slate-900/95 backdrop-blur-2xl border border-white/10 p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[90] animate-slide-up max-w-lg mx-auto">
+                    <div className="fixed bottom-6 left-6 right-6 bg-white/95 backdrop-blur-xl border border-slate-200 p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-[90] animate-slide-up max-w-lg mx-auto">
                         <div className="space-y-5">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 bg-sky-500/10 rounded-xl flex items-center justify-center border border-sky-500/20">
-                                        <span className="material-symbols-outlined text-sky-500 text-base font-black">edit_location</span>
+                                    <div className="w-10 h-10 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-base font-black">edit_location</span>
                                     </div>
-                                    <h3 className="text-[10px] font-black uppercase text-sky-400 tracking-[0.2em]">Passo #{selectedStep.orderIndex + 1}</h3>
+                                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Passo #{selectedStep.orderIndex + 1}</h3>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => removeStep(selectedStep.id)} className="w-9 h-9 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center transition-all active:scale-90 border border-red-500/20">
+                                    <button onClick={() => removeStep(selectedStep.id)} className="w-10 h-10 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center transition-all active:scale-90 hover:bg-red-100">
                                         <span className="material-symbols-outlined text-base">delete</span>
                                     </button>
-                                    <button onClick={() => setSelectedStepId(null)} className="w-9 h-9 bg-white/5 text-slate-400 rounded-xl flex items-center justify-center border border-white/10">
+                                    <button onClick={() => setSelectedStepId(null)} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-slate-100">
                                         <span className="material-symbols-outlined text-base">close</span>
                                     </button>
                                 </div>
                             </div>
                             
                             <div className="space-y-1.5">
-                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">Título</label>
+                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2">Título</label>
                                 <input 
                                     type="text"
                                     value={selectedStep.title}
                                     onChange={(e) => updateStep(selectedStep.id, { title: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 text-xs font-bold outline-none focus:border-sky-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs font-bold text-slate-800 outline-none focus:border-sky-500 transition-all"
                                     placeholder="O que o herói deve fazer?"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">Moedas</label>
+                                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2">Moedas</label>
                                     <input 
                                         type="number"
                                         value={selectedStep.coinReward || 0}
                                         onChange={(e) => updateStep(selectedStep.id, { coinReward: Number(e.target.value) })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs font-bold outline-none focus:border-sky-500 transition-all"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-sky-500 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">XP</label>
+                                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2">XP</label>
                                     <input 
                                         type="number"
                                         value={selectedStep.xpReward}
                                         onChange={(e) => updateStep(selectedStep.id, { xpReward: Number(e.target.value) })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs font-bold outline-none focus:border-sky-500 transition-all"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-sky-500 transition-all"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-2">Ícone</label>
+                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2">Ícone</label>
                                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
                                     {STEP_ICONS.map(i => (
                                         <button 
                                             key={i}
                                             onClick={() => updateStep(selectedStep.id, { icon: i })}
-                                            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all border-2 ${selectedStep.icon === i ? 'bg-sky-500 border-white text-white scale-110 shadow-lg shadow-sky-500/20' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white hover:border-white/10'}`}
+                                            className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all border-2 ${selectedStep.icon === i ? 'bg-sky-500 border-sky-500 text-white scale-110 shadow-lg shadow-sky-500/30' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300 hover:text-slate-600'}`}
                                         >
                                             <span className="material-symbols-outlined text-xl">{i}</span>
                                         </button>
@@ -503,7 +503,7 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
 
                             <button 
                                 onClick={() => setSelectedStepId(null)}
-                                className="w-full py-4 bg-white text-slate-950 rounded-2xl font-black text-[10px] uppercase shadow-2xl active:scale-95 transition-all tracking-widest"
+                                className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-slate-800/20 active:scale-95 transition-all tracking-widest hover:bg-slate-900"
                             >
                                 Confirmar
                             </button>

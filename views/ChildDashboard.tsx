@@ -105,7 +105,6 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLog
                             <h3 className="font-black text-slate-800 text-sm">Ver Todas<br/>as Missões</h3>
                         </div>
                     </button>
-                </div>
             </section>
 
             {/* Treinamento de Hoje (Tasks Rápidas) */}

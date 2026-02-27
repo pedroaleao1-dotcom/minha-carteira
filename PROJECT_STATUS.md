@@ -49,6 +49,6 @@ Este arquivo serve como o ponto central de controle do progresso de desenvolvime
 ## Log de Conclusões Recentes
 
 **Data: 26 de Fev, 2026**
-- *O que foi feito:* Corrigido o bug de "Database error querying schema" removendo a injeção de `NULL` nas chaves do Supabase Auth.
-- *Plano de teste:* Logar com `mestre@dreamquest.com` e checar se o dashboard carrega sem apresentar "Erro 500". (Validado com sucesso).
-- *Próximo passo lógico:* Adequar o projeto às regras de boas práticas PWA e documentação (Criar Manifest, READMEs das pastas).
+- *O que foi feito:* Melhorias de UI/UX nas telas de mapas (MapEditor e JourneyPath) para remover o tema escuro que estava destoante, adequando as duas páginas ao design claro e estilos do restante do app. Adicionais correções de erros de sintaxe e de funções perdidas no merge em `ChildDashboard.tsx` e `App.tsx`.
+- *Plano de teste:* Logar com contas de Pais (para MapEditor de criação) e Crianças (para JourneyPath visualização da aventura) em `http://localhost:5173` ou `3001` - Visualizar se a estética está clara, com sombras flutuantes e botões de acordo. Validado com sucesso pelo Agente e Browser Automático.
+- *Próximo passo lógico:* Prosseguir com demais refinamentos ou testar integrações adicionais a pedido do mestre.
