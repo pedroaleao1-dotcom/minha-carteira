@@ -3,18 +3,19 @@
 
 Este aplicativo transforma tarefas diárias em uma jornada épica. Siga as instruções abaixo para preparar o banco de dados.
 
-## 🚀 Gerenciamento do Banco de Dados via MCP
+## 🚀 Como Iniciar o Banco de Dados (Passo a Passo)
 
-O banco de dados relacional (PostgreSQL) é hospedado no Supabase. Para manter a consistência e automatizar a configuração, nós **utilizamos o Supabase MCP (Model Context Protocol)**. 
+Para que o aplicativo funcione corretamente, você deve configurar o banco de dados no Supabase:
 
-Isso significa que o Agente (IA) tem a capacidade de:
-1. **Ler o Schema:** Validar a estrutura das tabelas antes de propor o código.
-2. **Executar Scripts:** Rodar o arquivo `SETUP_DATABASE.sql` diretamente no servidor.
-3. **Gerenciar Dados:** Inserir dados de exemplo (seed) ou modificar registros necessários para testes.
+1.  Acesse seu projeto no [Supabase Dashboard](https://supabase.com).
+2.  No menu lateral esquerdo, clique em **SQL Editor**.
+3.  Clique em **New Query** (ou use uma aba em branco).
+4.  Abra o arquivo `SETUP_DATABASE.sql` deste projeto.
+5.  **COPIE TODO O CONTEÚDO** do arquivo e cole no editor do Supabase.
+6.  Clique no botão **Run** (ou pressione `Cmd+Enter` / `Ctrl+Enter`).
+7.  Verifique se a mensagem "Success. No rows returned" ou similar aparece.
 
-Sempre que precisar resetar o banco ou aplicar novas tabelas, basta solicitar ao agente para **"executar o script de setup via MCP"**.
-
-> **💡 Dica de Reset Seguro:** Ao rodar o `SETUP_DATABASE.sql`, o script identifica se os e-mails `mestre`, `arthur`, etc. já existem no Supabase Auth e apenas recarrega seus vínculos na tabela `user_members` sem quebrar seu acesso!
+**Atenção:** Nunca tente rodar arquivos `.ts` ou `.tsx` no SQL Editor. Use apenas o conteúdo do arquivo `.sql`.
 
 ## 📊 O que este script faz?
 - **Apaga tabelas antigas**: Garante que erros de tipos de dados anteriores sejam corrigidos.

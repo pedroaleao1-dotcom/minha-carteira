@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Member, Task, StoreItem, Dream, TaskCompletion, DreamStep, JourneyTemplate } from './types';
 
 // Importação das Páginas (Views)
-import Login from './views/Login';
 import RoleSelection from './views/RoleSelection';
 import ChildDashboard from './views/ChildDashboard';
 import ParentDashboard from './views/ParentDashboard';
@@ -29,7 +28,6 @@ import KingdomExplorer from './views/KingdomExplorer';
 import RequestMission from './views/RequestMission';
 
 // Serviços
-import { getCurrentUser, getLinkedMembers, signOutUser } from './services/auth';
 import { db } from './services/db';
 import { supabase, pushToCloud, pushMembersToCloud, pullFromCloud, pushStoreItem, pushStoreItemsToCloud, upsertMember, pushJourneyTemplate, fetchJourneyTemplates } from './services/supabase';
 import { generateDreamSteps } from './services/gemini';
@@ -62,8 +60,6 @@ type View =
 
 const App: React.FC = () => {
     const [view, setView] = useState<View>('role');
-    const [user, setUser] = useState<any>(null);
-    const [linkedMembers, setLinkedMembers] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -113,31 +109,12 @@ const App: React.FC = () => {
     useEffect(() => {
         const init = async () => {
             setIsLoading(true);
-            
-            try {
-                // Checa Auth
-                const sessionUser = await getCurrentUser();
-                
-                // Puxa Dados Locais
-                const localMembers = await db.members.toArray();
-                const localStore = await db.storeItems.toArray();
-                setMembers(localMembers);
-                setStoreItems(localStore);
-                
-                if (sessionUser) {
-                    setUser(sessionUser);
-                    const links = await getLinkedMembers(sessionUser.id);
-                    setLinkedMembers(links);
-                } else {
-                    setView('role'); // Não faz muita diferença, pois renderView vai interceptar
-                }
-                
-                setIsLoading(false);
-                if (navigator.onLine && sessionUser) syncData();
-            } catch (err) {
-                console.error("Erro na inicialização:", err);
-                setIsLoading(false);
-            }
+            const localMembers = await db.members.toArray();
+            const localStore = await db.storeItems.toArray();
+            setMembers(localMembers);
+            setStoreItems(localStore);
+            setIsLoading(false);
+            if (navigator.onLine) syncData();
         };
         init();
     }, []);
@@ -146,26 +123,23 @@ const App: React.FC = () => {
     const [syncTimeout, setSyncTimeout] = useState<NodeJS.Timeout | null>(null);
 
     const updateMemberById = async (id: string, updater: (m: Member) => Member) => {
-        setMembers(prevMembers => {
-            const currentMember = prevMembers.find(m => m.id === id);
-            if (!currentMember) return prevMembers;
-
-            const updated = { ...updater(currentMember), updatedAt: Date.now() };
-
-            // Update local DB asynchronously (Optimistic)
-            db.members.put(updated).catch(e => console.error("Error updating local DB:", e));
-
-            // Debounce cloud sync
-            if (navigator.onLine) {
-                if (syncTimeout) clearTimeout(syncTimeout);
-                const timeout = setTimeout(() => {
-                    pushToCloud(updated);
-                }, 2000);
-                setTimeout(() => setSyncTimeout(timeout), 0); // Avoid state update conflict warning
-            }
-
-            return prevMembers.map(m => m.id === id ? updated : m);
-        });
+        const currentMember = members.find(m => m.id === id);
+        if (!currentMember) return;
+        
+        const updated = { ...updater(currentMember), updatedAt: Date.now() };
+        
+        // Update local state and DB immediately (Optimistic)
+        await db.members.put(updated);
+        setMembers(prev => prev.map(m => m.id === id ? updated : m));
+        
+        // Debounce cloud sync
+        if (navigator.onLine) {
+            if (syncTimeout) clearTimeout(syncTimeout);
+            const timeout = setTimeout(() => {
+                pushToCloud(updated);
+            }, 2000); // Wait 2 seconds of inactivity before pushing
+            setSyncTimeout(timeout);
+        }
     };
 
     const deleteMember = async (id: string) => {
@@ -175,29 +149,10 @@ const App: React.FC = () => {
         if (navigator.onLine) await supabase.from('members').delete().eq('id', id);
     };
 
-    const handleLogout = async () => {
-        await signOutUser();
-        setUser(null);
-        setLinkedMembers([]);
+    const handleLogout = () => {
         setActiveMemberId(null);
         setSelectedDreamId(null);
         setView('role');
-    };
-
-    const handleLoginSuccess = async (userId: string) => {
-        setIsLoading(true);
-        try {
-            const sessionUser = await getCurrentUser();
-            const links = await getLinkedMembers(userId);
-            setUser(sessionUser);
-            setLinkedMembers(links);
-            setView('role');
-            if (navigator.onLine) syncData();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
     };
 
     const startJourneyFromTemplate = async (template: JourneyTemplate) => {
@@ -309,8 +264,6 @@ const App: React.FC = () => {
     };
 
     const renderView = () => {
-        const activeMembers = members.filter(m => m.status !== 'inactive');
-        
         if (isLoading) return (
             <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-slate-50">
                 <div className="w-16 h-16 border-4 border-amber-100 border-t-amber-500 rounded-full animate-spin"></div>
@@ -347,8 +300,8 @@ const App: React.FC = () => {
                 if (!activeMember) return null;
                 switch (view) {
                     case 'child_dash': return <ChildDashboard child={activeMember} onNavigate={setView} onOpenDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onLogout={handleLogout} />;
-                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={activeMembers} onApprove={approveTask} onLogout={handleLogout} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onOpenReports={() => setView('reports')} onManageMembers={() => setView('manage_members')} onManageTemplates={() => setView('manage_templates')} />;
-                    case 'reports': return <Reports members={activeMembers.filter(m => m.role === 'child')} onBack={() => setView('parent_dash')} />;
+                    case 'parent_dash': return <ParentDashboard activeParent={activeMember} members={members} onApprove={approveTask} onLogout={handleLogout} onAddTask={() => setView('add_task')} onAddStoreItem={() => setView('add_store_item')} onOpenCouncil={() => setView('council_room')} onPlay={() => setView('child_dash')} onEditMap={(id) => { setSelectedDreamId(id); setTemplateToEdit(null); setView('map_editor'); }} onOpenReports={() => setView('reports')} onManageMembers={() => setView('manage_members')} onManageTemplates={() => setView('manage_templates')} />;
+                    case 'reports': return <Reports members={members.filter(m => m.role === 'child')} onBack={() => setView('parent_dash')} />;
                     case 'kingdom_explorer': return <KingdomExplorer member={activeMember} onSelectTemplate={startJourneyFromTemplate} onBack={() => setView('child_dash')} />;
                     case 'request_mission': return <RequestMission onPropose={(prop) => { updateMemberById(activeMember.id, m => ({ ...m, tasks: [...m.tasks, { ...prop, id: Math.random().toString(36).substr(2, 9), reward: 0, xp: 0, status: 'pending', frequency: 'once', category: 'chore', assignedTo: [activeMember.id], updatedAt: Date.now() } as any] })); setView('child_dash'); }} onBack={() => setView('child_dash')} />;
                     case 'map_editor': return <MapEditor dream={selectedDream} template={templateToEdit || undefined} onSave={async (steps, newTitle) => { if (templateToEdit) { const updatedT = { ...templateToEdit, title: newTitle || templateToEdit.title, steps, updatedAt: Date.now() }; await db.journeyTemplates.put(updatedT); if (navigator.onLine) pushJourneyTemplate(updatedT); setView('manage_templates'); } else if (selectedDream) { const owner = members.find(m => m.dreams.some(d => d.id === selectedDreamId)); if (owner) updateMemberById(owner.id, m => ({...m, dreams: m.dreams.map(d => d.id === selectedDreamId ? {...d, steps} : d)})); setView('manage_templates'); } }} onBack={() => setView(templateToEdit ? 'manage_templates' : 'parent_dash')} />;
