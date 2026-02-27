@@ -39,15 +39,8 @@ const KingdomExplorer: React.FC<Props> = ({ member, onSelectTemplate, onBack }) 
                     <h1 className="text-[10px] font-black text-sky-400 uppercase tracking-[0.3em]">Explorar Sonhos</h1>
                     <h2 className="text-sm font-black text-white uppercase tracking-tight">Sonhos Mágicos</h2>
                 </div>
-                <div className="w-12 h-12 flex flex-col items-center justify-center bg-sky-500/10 rounded-2xl border border-sky-500/20">
-                    <span className="material-symbols-outlined text-sky-400 text-lg">bolt</span>
-                    <span className="text-[9px] font-black text-white">{member.xp}</span>
-                </div>
+                <div className="w-12 h-12"></div>
             </header>
-
-            <div className="bg-sky-500 text-white text-[10px] font-black uppercase tracking-widest text-center py-2 shadow-inner">
-                Faça missões para ganhar XP e avançar nos mapas!
-            </div>
 
             <main className="p-8 relative z-10 space-y-8">
                 {isLoading ? (

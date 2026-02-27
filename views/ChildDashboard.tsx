@@ -8,39 +8,22 @@ interface Props {
     onNavigate: (view: any) => void;
     onOpenDream: (id: string) => void;
     onLogout: () => void;
-    onChangeProfile: () => void;
 }
 
-const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLogout, onChangeProfile }) => {
-    // Puxa as tarefas pendentes
+const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLogout }) => {
+    // Busca TODAS as tarefas pendentes do herói
     const activeTasks = child.tasks.filter(t => t.status === 'todo');
-    
-    // Identifica o Sonho Ativo (ex: o primeiro que não foi concluído e tem maior prioridade)
-    // Aqui usamos uma lógica simples: pega o primeiro sonho ativo que tem progresso > 0, ou pega o primeiro sonho da lista
     const activeDreams = child.dreams.filter(d => d.status === 'active');
-    const mainDream = activeDreams.find(d => d.currentAmount > 0) || activeDreams[0];
-
-    // Identifica o Reino Ativo (qualquer sonho que esteja atrelado a um template/mapa de jornada)
-    const activeJourneyDream = activeDreams.find(d => d.templateId);
-    
-    // Calcula progresso se houver sonho
-    const dreamProgress = mainDream ? Math.min(100, Math.round((mainDream.currentAmount / mainDream.targetAmount) * 100)) : 0;
 
     return (
         <div className="flex-1 flex flex-col p-6 pb-24 bg-slate-50 min-h-screen">
             {/* Header: Status e Perfil */}
             <header className="flex flex-col items-center mb-6 pt-4">
                 <div className="w-full flex justify-between items-center mb-6">
-                    <div className="flex gap-2 items-center">
-                        <button onClick={onChangeProfile} className="text-slate-400 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 active:scale-90 transition-all">
-                            <span className="material-symbols-outlined text-lg">group</span>
-                            <span className="text-[10px] font-black uppercase tracking-tighter hidden sm:inline">Perfis</span>
-                        </button>
-                        <button onClick={onLogout} className="text-red-400 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 active:scale-90 transition-all">
-                            <span className="material-symbols-outlined text-lg">logout</span>
-                            <span className="text-[10px] font-black uppercase tracking-tighter hidden sm:inline">Sair</span>
-                        </button>
-                    </div>
+                    <button onClick={onLogout} className="text-slate-400 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 active:scale-90 transition-all">
+                        <span className="material-symbols-outlined text-lg">logout</span>
+                        <span className="text-[10px] font-black uppercase tracking-tighter">Sair</span>
+                    </button>
                     
                     <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="text-right">
@@ -87,24 +70,30 @@ const ChildDashboard: React.FC<Props> = ({ child, onNavigate, onOpenDream, onLog
                     </div>
                     <div className="relative z-10 flex flex-col justify-center h-full">
                         <h2 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-1">Explorar</h2>
-                        <h3 className="text-2xl font-black">Reinos Mágicos</h3>
+                        <h3 className="text-2xl font-black">Sonhos Mágicos</h3>
                     </div>
                     <span className="absolute bottom-6 right-6 material-symbols-outlined text-3xl animate-float">travel_explore</span>
                 </button>
 
-                    {/* Botão de Missões (Fallback para lista de missões completas) */}
-                    <button 
-                        onClick={() => onNavigate('tasks')}
-                        className="bg-white p-5 rounded-[2.5rem] shadow-sm border border-slate-100 active:scale-95 transition-all flex flex-col justify-between items-start text-left"
-                    >
-                        <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Histórico</h2>
-                        <div>
-                            <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mb-2">
-                                <span className="material-symbols-outlined text-2xl">task_alt</span>
-                            </div>
-                            <h3 className="font-black text-slate-800 text-sm">Ver Todas<br/>as Missões</h3>
-                        </div>
-                    </button>
+                <button 
+                    onClick={() => onNavigate('tasks')}
+                    className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:scale-95 transition-all"
+                >
+                    <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-3xl">task_alt</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Missões</span>
+                </button>
+
+                <button 
+                    onClick={() => onNavigate('dream_gallery')}
+                    className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:scale-95 transition-all"
+                >
+                    <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-3xl">cloud_done</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Sonhos</span>
+                </button>
             </section>
 
             {/* Treinamento de Hoje (Tasks Rápidas) */}
