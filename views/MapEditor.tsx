@@ -26,6 +26,18 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [showAIPanel, setShowAIPanel] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [stars, setStars] = useState<{id: number, x: number, y: number, size: number, duration: string}[]>([]);
+
+    React.useEffect(() => {
+        const newStars = Array.from({ length: 50 }).map((_, i) => ({
+            id: i,
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            size: Math.random() * 2 + 1,
+            duration: (Math.random() * 3 + 2) + 's'
+        }));
+        setStars(newStars);
+    }, []);
 
     const autoOrganize = () => {
         if (steps.length === 0) return;
@@ -368,30 +380,59 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] pointer-events-none"></div>
                         <div className="absolute top-3/4 left-1/3 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
 
+                        {/* Estrelas */}
+                        {stars.map(star => (
+                            <div 
+                                key={star.id}
+                                className="star animate-twinkle"
+                                style={{ 
+                                    left: `${star.x}%`, 
+                                    top: `${star.y}%`, 
+                                    width: `${star.size}px`, 
+                                    height: `${star.size}px`,
+                                    '--duration': star.duration
+                                } as any}
+                            />
+                        ))}
+
                         {/* Linhas Conectoras */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
                             <defs>
                                 <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.1" />
-                                    <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.4" />
-                                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.1" />
+                                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.2" />
+                                    <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.6" />
+                                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.2" />
                                 </linearGradient>
+                                <filter id="glow">
+                                    <feGaussianBlur stdDeviation="3" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
                             </defs>
                             {steps.length > 1 && [...steps].sort((a,b) => a.orderIndex - b.orderIndex).map((step, i) => {
                                 if (i === 0) return null;
                                 const prev = steps.find(s => s.orderIndex === i - 1);
                                 if (!prev) return null;
                                 return (
-                                    <path 
-                                        key={`line-${i}`}
-                                        d={`M ${prev.xPos}% ${prev.yPos}% L ${step.xPos}% ${step.yPos}%`}
-                                        stroke="url(#lineGradient)"
-                                        strokeWidth="6"
-                                        fill="none"
-                                        strokeLinecap="round"
-                                        strokeDasharray="1, 15"
-                                        className="animate-pulse"
-                                    />
+                                    <g key={`line-group-${i}`}>
+                                        {/* Glow effect line */}
+                                        <path 
+                                            d={`M ${prev.xPos}% ${prev.yPos}% L ${step.xPos}% ${step.yPos}%`}
+                                            stroke="#38bdf8"
+                                            strokeWidth="8"
+                                            fill="none"
+                                            strokeOpacity="0.1"
+                                            filter="url(#glow)"
+                                        />
+                                        <path 
+                                            d={`M ${prev.xPos}% ${prev.yPos}% L ${step.xPos}% ${step.yPos}%`}
+                                            stroke="url(#lineGradient)"
+                                            strokeWidth="4"
+                                            fill="none"
+                                            strokeLinecap="round"
+                                            strokeDasharray="12, 12"
+                                            className="animate-dash-flow"
+                                        />
+                                    </g>
                                 );
                             })}
                         </svg>
@@ -411,21 +452,26 @@ const MapEditor: React.FC<Props> = ({ dream, template, onSave, onBack }) => {
                                 onPointerUp={(e) => handlePointerUp(e, step.id)}
                             >
                                 <div className={`
-                                    w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl border-4 transition-all duration-300
+                                    w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl border-4 transition-all duration-300 relative
                                     ${selectedStepId === step.id 
-                                        ? 'bg-sky-500 border-white shadow-sky-500/40 rotate-12' 
-                                        : 'bg-slate-900 border-white/10 hover:border-sky-500/50'}
+                                        ? 'bg-gradient-to-br from-sky-400 to-sky-600 border-white shadow-sky-500/50 rotate-12 scale-110' 
+                                        : 'bg-slate-900/80 backdrop-blur-sm border-white/10 hover:border-sky-500/50'}
                                 `}>
-                                    <span className={`material-symbols-outlined text-3xl font-black ${selectedStepId === step.id ? 'text-white' : 'text-slate-500'}`}>
+                                    {/* Aura effect for selected step */}
+                                    {selectedStepId === step.id && (
+                                        <div className="absolute inset-0 rounded-[2rem] bg-sky-400 blur-xl opacity-40 animate-pulse"></div>
+                                    )}
+                                    
+                                    <span className={`material-symbols-outlined text-3xl font-black relative z-10 ${selectedStepId === step.id ? 'text-white' : 'text-slate-500'}`}>
                                         {step.icon}
                                     </span>
                                     
                                     {/* Badge de Ordem */}
-                                    <div className="absolute -top-2 -left-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-sky-500">
+                                    <div className="absolute -top-2 -left-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-sky-500 z-20">
                                         <span className="text-[10px] font-black text-sky-600">{step.orderIndex + 1}</span>
                                     </div>
                                 </div>
-                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-white/10 shadow-xl">
+                                <div className={`absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/10 shadow-2xl transition-all ${selectedStepId === step.id ? 'text-sky-400 border-sky-500/30 scale-110' : 'text-slate-400'}`}>
                                     {step.title}
                                 </div>
                             </div>

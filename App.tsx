@@ -26,6 +26,7 @@ import ManageMembers from './views/ManageMembers';
 import ManageTemplates from './views/ManageTemplates';
 import KingdomExplorer from './views/KingdomExplorer';
 import RequestMission from './views/RequestMission';
+import Login from './views/Login';
 
 // Serviços
 import { db } from './services/db';
@@ -33,6 +34,7 @@ import { supabase, pushToCloud, pushMembersToCloud, pullFromCloud, pushStoreItem
 import { generateDreamSteps } from './services/gemini';
 
 type View = 
+    | 'login'
     | 'role' 
     | 'child_dash' 
     | 'parent_dash' 
@@ -59,7 +61,7 @@ type View =
     | 'reports';
 
 const App: React.FC = () => {
-    const [view, setView] = useState<View>('role');
+    const [view, setView] = useState<View>('login');
     const [isLoading, setIsLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -79,9 +81,19 @@ const App: React.FC = () => {
         const handleOffline = () => setIsOnline(false);
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+
+        // Sincronização automática a cada 5 minutos
+        const syncInterval = setInterval(() => {
+            if (navigator.onLine) {
+                console.log("Iniciando sincronização automática periódica...");
+                syncData();
+            }
+        }, 5 * 60 * 1000);
+
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            clearInterval(syncInterval);
         };
     }, []);
 
@@ -152,10 +164,49 @@ const App: React.FC = () => {
     };
 
     const deleteMember = async (id: string) => {
-        if (!confirm("Remover este membro?")) return;
-        await db.members.delete(id);
-        setMembers(prev => prev.filter(m => m.id !== id));
-        if (navigator.onLine) await supabase.from('members').delete().eq('id', id);
+        console.log("Tentando deletar membro:", id);
+        
+        if (id === activeMemberId) {
+            window.alert("Ops! Você não pode apagar o seu próprio perfil enquanto o está usando. 🛡️");
+            return;
+        }
+
+        const memberToDelete = members.find(m => m.id === id);
+        if (!memberToDelete) {
+            console.error("Membro não encontrado para deletar:", id);
+            return;
+        }
+
+        if (!window.confirm(`Tem certeza que deseja remover ${memberToDelete.name} da aventura? Todo o progresso será perdido! 😱`)) {
+            return;
+        }
+
+        try {
+            console.log("Confirmado! Removendo localmente...");
+            // 1. Atualização Otimista: Remove da UI imediatamente
+            setMembers(prev => prev.filter(m => m.id !== id));
+            
+            // 2. Remove do Banco Local (Dexie)
+            await db.members.delete(id);
+            console.log("Removido do Dexie.");
+            
+            // 3. Remove da Nuvem (Supabase)
+            if (navigator.onLine) {
+                console.log("Removendo da nuvem...");
+                const { error } = await supabase.from('members').delete().eq('id', id);
+                if (error) {
+                    console.error("Erro Supabase ao deletar:", error);
+                    window.alert("O membro foi removido do seu dispositivo, mas houve um erro ao sincronizar com a nuvem.");
+                } else {
+                    console.log("Removido da nuvem com sucesso.");
+                }
+            }
+        } catch (e) {
+            console.error("Erro fatal ao deletar membro:", e);
+            window.alert("Não foi possível remover o membro agora. Por favor, tente novamente.");
+            const currentMembers = await db.members.toArray();
+            setMembers(currentMembers);
+        }
     };
 
     const handleLogout = () => {
@@ -281,9 +332,40 @@ const App: React.FC = () => {
         );
 
         switch (view) {
+            case 'login': return <Login onLogin={() => setView('role')} />;
             case 'role': return <RoleSelection members={members} isLoading={isLoading} onSelect={(id) => { setActiveMemberId(id); const m = members.find(x => x.id === id); setView(m?.role === 'parent' ? 'parent_dash' : 'child_dash'); }} onAddNew={() => { setMemberToEdit(null); setView('add_member'); }} />;
             case 'add_member':
-            case 'edit_member': return <AddMember memberToEdit={memberToEdit} onSave={async (m) => { if (memberToEdit) { await updateMemberById(memberToEdit.id, prev => ({ ...prev, ...m })); } else { const newM = {...m, id: Math.random().toString(36).substr(2, 9), level: 1, xp: 0, coins: 0, dreams: [], tasks: [], taskCompletions: [], achievements: [], redemptions: [], history: [], updatedAt: Date.now()}; await db.members.put(newM as Member); setMembers(prev => [...prev, newM as Member]); if(navigator.onLine) pushToCloud(newM as Member); } setView(activeMemberId ? 'manage_members' : 'role'); }} onBack={() => setView(activeMemberId ? 'manage_members' : 'role')} />;
+            case 'edit_member': return (
+                <AddMember 
+                    key={memberToEdit?.id || 'new-member'}
+                    memberToEdit={memberToEdit} 
+                    onSave={async (m) => { 
+                        if (memberToEdit) { 
+                            await updateMemberById(memberToEdit.id, prev => ({ ...prev, ...m })); 
+                        } else { 
+                            const newM = {
+                                ...m, 
+                                id: Math.random().toString(36).substr(2, 9), 
+                                level: 1, 
+                                xp: 0, 
+                                coins: 0, 
+                                dreams: [], 
+                                tasks: [], 
+                                taskCompletions: [], 
+                                achievements: [], 
+                                redemptions: [], 
+                                history: [], 
+                                updatedAt: Date.now()
+                            }; 
+                            await db.members.put(newM as Member); 
+                            setMembers(prev => [...prev, newM as Member]); 
+                            if(navigator.onLine) pushToCloud(newM as Member); 
+                        } 
+                        setView(activeMemberId ? 'manage_members' : 'role'); 
+                    }} 
+                    onBack={() => setView(activeMemberId ? 'manage_members' : 'role')} 
+                />
+            );
             case 'manage_members': return <ManageMembers members={members} onEdit={(m) => { setMemberToEdit(m); setView('edit_member'); }} onDelete={deleteMember} onAdd={() => { setMemberToEdit(null); setView('add_member'); }} onBack={() => setView('parent_dash')} />;
             case 'manage_templates': return (
                 <ManageTemplates 
@@ -364,7 +446,7 @@ const App: React.FC = () => {
                         />
                     );
                     case 'add_store_item': return <AddStoreItem members={members} onAdd={async (item) => { const newI = {...item, id: Math.random().toString(36).substr(2, 9), updatedAt: Date.now()}; await db.storeItems.put(newI); setStoreItems(prev => [...prev, newI]); if(navigator.onLine) pushStoreItem(newI); setView('parent_dash'); }} onBack={() => setView('parent_dash')} />;
-                    case 'council_room': return <CouncilRoom members={members} onBack={() => setView('parent_dash')} />;
+                    case 'council_room': return <CouncilRoom members={members} onUpdateMember={updateMemberById} onBack={() => setView('parent_dash')} />;
                     case 'journey': return <JourneyPath member={activeMember} selectedDreamId={selectedDreamId || undefined} onSelectDream={(id) => { setSelectedDreamId(id); setView('dream_details'); }} onCompleteStep={(dId, sId) => completeDreamStep(activeMember.id, dId, sId)} onBack={() => setView('kingdom_explorer')} />;
                     default: return <RoleSelection members={members} onSelect={(id) => setView('child_dash')} onAddNew={() => { setMemberToEdit(null); setView('add_member'); }} />;
                 }

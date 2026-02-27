@@ -5,6 +5,7 @@ import { fetchGlobalSettings, updateGlobalSettings, fetchLevelConfigs, updateLev
 
 interface Props {
     members: Member[];
+    onUpdateMember: (id: string, updater: (m: Member) => Member) => Promise<void>;
     onBack: () => void;
 }
 
@@ -19,7 +20,7 @@ const FORGE_ICONS = [
     'military_tech', 'verified', 'rocket_launch', 'celebration', 'star'
 ];
 
-const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
+const CouncilRoom: React.FC<Props> = ({ members, onUpdateMember, onBack }) => {
     // Fix: Added updatedAt to initial state
     const [settings, setSettings] = useState<GlobalSettings>({ 
         allow_coin_creation: true,
@@ -68,11 +69,7 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
 
         const now = Date.now();
         const updatePromises = selectedGrantees.map(async (id) => {
-            const member = members.find(m => m.id === id);
-            if (!member) return;
-
-            // Fix: Added missing updatedAt to the bonus transaction item
-            const updatedMember = {
+            return onUpdateMember(id, (member) => ({
                 ...member,
                 coins: member.coins + forgeCoins,
                 xp: member.xp + forgeXP,
@@ -85,8 +82,7 @@ const CouncilRoom: React.FC<Props> = ({ members, onBack }) => {
                     timestamp: now,
                     updatedAt: now
                 }, ...member.history]
-            };
-            return upsertMember(updatedMember);
+            }));
         });
 
         await Promise.all(updatePromises);
